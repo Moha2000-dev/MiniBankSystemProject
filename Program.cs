@@ -35,7 +35,7 @@ namespace MiniBankSystemProject
 
         }
         //creat the welcom function
-        static string Welcome()
+        static string WelcomeScreen()
         {
             Console.WriteLine("Welcome to " + BankName);
             Console.WriteLine("Please select an option:");
@@ -99,14 +99,67 @@ namespace MiniBankSystemProject
                     // Add user functionality here
                     return;
                 }
-                
+
             }
             Console.WriteLine("Invalid username or password.");
-            
-
-
 
         }
+        //  request creat the function for the creat account use try parse
+        static void CreateAccountrequest()
+        {
+            Console.WriteLine("Please enter your username:");
+            string username = Console.ReadLine();
+            Console.WriteLine("Please enter your age:");
+            string ageInput = Console.ReadLine();
+            int age;
+            if (!int.TryParse(ageInput, out age))
+            {
+                Console.WriteLine("Invalid age. Please enter a valid number.");
+                return;
+            }
+            Console.WriteLine("Please enter your password:");
+            string password = Console.ReadLine();
+            Console.WriteLine("Please enter the amount to deposit:");
+            string amountInput = Console.ReadLine();
+            double amount;
+            if (!double.TryParse(amountInput, out amount) || amount < MinimumBalance)
+            {
+                Console.WriteLine("Invalid amount. Please enter a valid number greater than " + MinimumBalance);
+                return;
+            }
+            // Add account creation logic here 
+
+        }
+        // functions get  requset of the creat account and add it to the list 
+
+        static void CreateAccount(string username, int age, string password, double amount)
+        {
+            // Check if the account already exists
+            for (int i = 0; i < UserName.Count; i++)
+            {
+                if (UserName[i] == username)
+                {
+                    Console.WriteLine("Account already exists for this username.");
+                    return;
+                }
+            }
+            // Add the new account to the lists
+            UserName.Add(username);
+            Age.Add(age);
+            Userspassword.Add(password);
+            Amount.Add(amount);
+            AccounstNumber.Add(Guid.NewGuid().ToString());
+            StatesOfAccount.Add("Active");
+            Console.WriteLine("Account created successfully!");
+            Console.WriteLine("Account Number: " + AccounstNumber[AccounstNumber.Count - 1]);
+            Console.WriteLine("Username: " + UserName[UserName.Count - 1]);
+            Console.WriteLine("Password: " + Userspassword[Userspassword.Count - 1]);
+            Console.WriteLine("Amount: " + Amount[Amount.Count - 1]);
+            Console.WriteLine("State of Account: " + StatesOfAccount[StatesOfAccount.Count - 1]);
+        }
+        //
+        
 
     }
-}
+
+}  
