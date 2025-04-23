@@ -17,31 +17,96 @@ namespace MiniBankSystemProject
         const string AdminPassword = "admin"; // admin password
 
         // global list (parallel)
-        static List<string> UserName  = new List<string>();
+        static List<string> UserName = new List<string>();
         static List<int> Age = new List<int>();
-        static List<string> AccountNumber = new List<string>();
-        static List<string> password = new List<string>();
+        static List<string> AccounstNumber = new List<string>();
+        static List<string> Userspassword = new List<string>();
         static List<double> Amount = new List<double>();
         static List<string> StatesOfAccount = new List<string>();
-        static Queue<string> CreatAccountreadRequest= new Queue<string>();
-        static Queue<string> blookAccountreadRequest=new Queue<string>();
+        static Queue<string> CreatAccountreadRequest = new Queue<string>();
+        static Queue<string> blookAccountreadRequest = new Queue<string>();
         static Stack<string> AccountreadRequest = new Stack<string>();
-        static Dictionary<double,string> HistoryTranscations = new Dictionary<double,string>();
+        static Dictionary<double, string> HistoryTranscations = new Dictionary<double, string>();
 
-        
 
-       static void Main(string[] args)
+
+        static void Main(string[] args)
         {
-            
+
         }
         //creat the welcom function
-        static void welcomScreen() { 
-        
-        
-        
+        static string Welcome()
+        {
+            Console.WriteLine("Welcome to " + BankName);
+            Console.WriteLine("Please select an option:");
+            Console.WriteLine("1.admin");
+            Console.WriteLine("2.user ");
+            Console.WriteLine("3. Exit");
+            string choice = Console.ReadLine();
+            switch (choice)
+            {
+                case "1":
+                    Admin(); // admin function
+                    break;
+                case "2":
+                    User(); // user function
+                    break;
+                case "3":
+                    Console.WriteLine("Thank you for using " + BankName); // exit the program
+                    break;
+                default:
+                    Console.WriteLine("Invalid choice. Please try again."); // invalid choice
+                    break;
+            }
+            return choice;
+
         }
+        // creat the function for the admin
+        static void Admin()
+        {
+            Console.WriteLine("Welcome to the Admin Panel");
+            Console.WriteLine("Please enter your username:");
+            string username = Console.ReadLine();
+            Console.WriteLine("Please enter your password:");
+            string password = Console.ReadLine();
+            if (username == AdminNAme && password == AdminPassword)
+            {
+                Console.WriteLine("Welcome, Admin!");
+                // Add admin functionality here
+            }
+            else
+            {
+
+                Console.WriteLine("Invalid username or password.");
+            }
 
 
+        }
+        // creat the function for the user
+        static void User()
+        {
+            Console.WriteLine("Welcome to the User Panel");
+            Console.WriteLine("Please enter your username:");
+            string username = Console.ReadLine();
+            Console.WriteLine("Please enter your password:");
+            string password = Console.ReadLine();
+            // Check if the username and password  same at the needed locations 
+            for (int i = 0; i < UserName.Count; i++)
+            {
+                if (UserName[i] == username && Userspassword[i] == password)
+                {
+                    Console.WriteLine("Welcome, " + username + "!");
+                    // Add user functionality here
+                    return;
+                }
+                
+            }
+            Console.WriteLine("Invalid username or password.");
+            
+
+
+
+        }
 
     }
 }
