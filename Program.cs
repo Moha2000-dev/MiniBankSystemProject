@@ -30,7 +30,7 @@ namespace MiniBankSystemProject
         static List<string> StatesOfAccount = new List<string>();
         static Queue<string> CreatAccountreadRequest = new Queue<string>();
         static Queue<string> blookAccountreadRequest = new Queue<string>();
-        static Stack<string> AccountreadRequest = new Stack<string>();
+        static Stack<string> AccountDeletRequest = new Stack<string>();
         static Dictionary<double, string> HistoryTranscations = new Dictionary<double, string>();
 
 
@@ -141,18 +141,24 @@ namespace MiniBankSystemProject
         }// Admin menu function
         static void AdminMenu()
         {
-            Console.WriteLine("Welcome to the admin menu.");
+           Console.WriteLine("Welcome to the admin menu.");
             Console.WriteLine("Please select an option:");
-            Console.WriteLine("1. Create account");
+            Console.WriteLine("1. View account requests");
             Console.WriteLine("2. Block account");
             Console.WriteLine("3. View reviews");
-            Console.WriteLine("4. View transactions history");
-            Console.WriteLine("5. Exit");
+            Console.WriteLine("4. View delete requests");
+            Console.WriteLine("5. View block requests");
+            Console.WriteLine("6. View all accounts");
+            Console.WriteLine("7. Create account");
+            Console.WriteLine("8. Delete account");
+            Console.WriteLine("9. Exit");
+            // get the user choice
             string choice = Console.ReadLine();
             switch (choice)
             {
                 case "1":
-                    CreateAccount();
+
+                    ViewAcounetRequest();
                     break;
                 case "2":
                     BlockAccount();
@@ -161,20 +167,25 @@ namespace MiniBankSystemProject
                     ViewReviews();
                     break;
                 case "4":
-                    ViewDeletRequset();
+                    ViewDeletRequsets();
                     break;
                 case "5":
                     ViewBlockRequset();
                     break;
+                case "6":
+                    ViewallAccount();
+                    break;
+                case "7":
+                    CreateAccount();
+                    break;
+                case "8":
+                    DeletAccount();
+                    break;
 
-
-
-
-
-
-                case "":
+                case "9":
                     WelcomeScreen();
                     break;
+
                 default:
                     Console.WriteLine("Invalid choice. Please try again.");
                     break;
@@ -229,10 +240,12 @@ namespace MiniBankSystemProject
             Console.WriteLine("4. View transactions history");
             Console.WriteLine("5. Exit");
             string choice = Console.ReadLine();
+
             switch (choice)
             {
                 case "1":
-                   CheakActiveAccounet();
+                    CheakActiveAccounet();
+                    break;
                 case "2":
                     ViewAccountBalance();
                     break;
@@ -240,13 +253,13 @@ namespace MiniBankSystemProject
                     DepositMoney();
                     break;
                 case "4":
-                    WithdrawMoney();
+                    withdraw();
                     break;
                 case "5":
                     ViewTransactionsHistory();
                     break;
                 case "6":
-                    RequsetBlockRequset();
+                    CreateBlockAccountRequest();
                     break;
                 case "7":
                     submitReview();
@@ -317,23 +330,25 @@ namespace MiniBankSystemProject
         //View the account balance
         static void ViewAccountBalance()
         {
-            Console.WriteLine("Please enter your account number:");
-            string accountNumber = Console.ReadLine();
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
             // check if the ID already exists
-            if (!AccounstNumber.Contains(accountNumber))
+            if (!UserID.Contains(UserID))
             {
                 Console.WriteLine("Invalid Account Number");
                 return;
             }
             // get the index of the account number
-            int index = AccounstNumber.IndexOf(accountNumber);
+            int index = UserID.IndexOf(UserID);
             // get the balance of the account
             double balance = Amount[index];
             Console.WriteLine("Your account balance is: " + balance);
         }
         // function to deposit money
-        public static void DepositMoney(string UserID)
+        public static void DepositMoney()
         {
+            Console.WriteLine("Please enter User ID");
+            string UserID = Console.ReadLine();
             Console.WriteLine("Please enter the Amount of mony you want to Deposit");
             double amount = double.Parse(Console.ReadLine());
             // get the index of the account number
@@ -358,9 +373,11 @@ namespace MiniBankSystemProject
             balance += amount;
         }
         // function to creat user account
-        public static void createAccount(string UserID)
+        public static void CreateAccount()
         {
-            int IndexOfUser = UserID.IndexOf(UserID);
+            Console.WriteLine("Please enter userID:");
+            string userID = Console.ReadLine();
+            int IndexOfUser = UserID.IndexOf(userID);
             if (IndexOfUser == -1)
             {
                 Console.WriteLine("Invalid UserID");
@@ -380,7 +397,7 @@ namespace MiniBankSystemProject
                 {
                     if (balance < MinimumBalance)
                     {
-                        Console.WriteLine("Your account balance is less than the minimum balance. Please deposit more money.");
+                        Console.WriteLine("Your account balance is less than the minimum balance. Please ask the user to add  more money.");
                         return;
                     }
                     else
@@ -394,17 +411,36 @@ namespace MiniBankSystemProject
             }
 
 
-          
+
 
 
 
 
         }
         // function to withdraw money 
-        static public void withdraw() {
-            
+        static public void withdraw()
+        {
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
+            // check if the ID already exists
+            if (!UserID.Contains(UserID))
+            {
+                Console.WriteLine("Invalid Account Number");
+                return;
+            }
+
             Console.WriteLine("Please enter the amount of money you want to withdraw:");
-            double amount = double.Parse(Console.ReadLine());
+            // get the amount of money to withdraw add try catch
+            double amount;
+            try
+            {
+                amount = double.Parse(Console.ReadLine());
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Invalid amount. Please try again.");
+                return;
+            }
             // get the index of the account number
             int index = AccounstNumber.IndexOf(UserID);
             // check if the amount is valid
@@ -435,16 +471,249 @@ namespace MiniBankSystemProject
             Console.WriteLine("Your account balance is: " + balance);
 
         }
-        // cheak active accounst 
-        
-        
+        // PROCESS TO Cheak Active Accounet with try and catch ;
+        public static void CheakActiveAccounet()
+        {
+            try
+            {
+                Console.WriteLine("Please enter your UserID");
+                string UserID = Console.ReadLine();
+                // check if the ID already exists
+                if (!UserID.Contains(UserID))
+                {
+                    Console.WriteLine("Invalid Account Number");
+                    return;
+                }
+                // get the index of the account number
+                int index = UserID.IndexOf(UserID);
+                // check if the account is blocked
+                if (StatesOfAccount[index] == "Blocked")
+                {
+                    Console.WriteLine("Your account is blocked. Please contact the admin.");
+                    return;
+                }
+                // check if the account is active
+                if (StatesOfAccount[index] == "Active")
+                {
+                    Console.WriteLine("Your account is active.");
+                }
+                else
+                {
+                    Console.WriteLine("Your account is not active.");
+                }
+                // check if the account is in proces
+                if (StatesOfAccount[index] == "Inproces")
+                {
+                    Console.WriteLine("Your account is in proces.");
+                }
+                else
+                {
+                    Console.WriteLine("Your account is not in proces.");
+                }
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Invalid UserID. Please try again.");
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+                return;
+            }
 
 
 
+
+
+
+
+
+
+        }
+        // function to view the transactions history
+        public static void ViewTransactionsHistory()
+        {
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
+            // check if the ID already exists
+            if (!UserID.Contains(UserID))
+            {
+                Console.WriteLine("Invalid Account Number");
+                return;
+            }
+            // get the index of the account number
+            int index = UserID.IndexOf(UserID);
+            // check if the account is blocked
+            if (StatesOfAccount[index] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the admin.");
+                return;
+            }
+            // get the history of transactions
+            foreach (KeyValuePair<double, string> transaction in HistoryTranscations)
+            {
+                Console.WriteLine("Transaction: " + transaction.Key + " " + transaction.Value);
+            }
+        }
+
+
+        //submit a review
+        public static void submitReview()
+        {
+            Console.WriteLine("Please enter your review:");
+            string review = Console.ReadLine();
+            Review.Push(review);
+            Console.WriteLine("Your review has been submitted successfully.");
+        }
+        // functions to viwe   View Acounet Request();
+        public static void ViewAcounetRequest()
+        {
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
+            // check if the ID already exists
+            if (!UserID.Contains(UserID))
+            {
+                Console.WriteLine("Invalid Account Number");
+                return;
+            }
+            // get the index of the account number
+            int index = UserID.IndexOf(UserID);
+            // check if the account is blocked
+            if (StatesOfAccount[index] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the admin.");
+                return;
+            }
+            // check if the account is in proces
+            // get the history of transactions
+            foreach (string transaction in CreatAccountreadRequest)
+            {
+                Console.WriteLine("Transaction: " + transaction);
+            }
+        }
+
+        public static void BlockAccount()
+        {
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
+            // check if the ID already exists
+            if (!UserID.Contains(UserID))
+            {
+                Console.WriteLine("Invalid Account Number");
+                return;
+            }
+            // get the index of the account number
+            int index = UserID.IndexOf(UserID);
+            // check if the account is blocked
+            if (StatesOfAccount[index] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the admin.");
+                return;
+            }
+            // check if the account is in proces
+            if (StatesOfAccount[index] == "Inproces")
+            {
+                Console.WriteLine("Your account is in proces.");
+            }
+            else
+            {
+                Console.WriteLine("Your account is not in proces.");
+            }
+            //change the state of the account to blocked
+            StatesOfAccount[index] = "Blocked";
+            // add the account number to the blocked accounts list
+            blookAccountreadRequest.Enqueue(AccounstNumber[index]);
+            Console.WriteLine("Your account has been blocked successfully.");
+
+
+
+
+        }
+        // function to view the reviews
+        public static void ViewReviews()
+        {
+
+            foreach (string transaction in Review)
+            {
+                Console.WriteLine("Transaction: " + transaction);
+            }
+        }
+        // function to View Delet Requsets:
+        public static void ViewDeletRequsets()
+        {
+            foreach (string transaction in AccountDeletRequest)
+            {
+                Console.WriteLine("Transaction: " + transaction);
+            }
+
+        }
+        // function to view the blocked accounts
+        public static void ViewBlockRequset()
+        {
+            foreach (string transaction in blookAccountreadRequest)
+            {
+                Console.WriteLine("Transaction: " + transaction);
+            }
+        }
+        // function to view all accounts
+        public static void ViewallAccount()
+        {
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                Console.WriteLine("Account Number: " + AccounstNumber[i]);
+                Console.WriteLine("User Name: " + UserName[i]);
+                Console.WriteLine("Age: " + Age[i]);
+                Console.WriteLine("Password: " + Userspassword[i]);
+                Console.WriteLine("National ID: " + UserNationalID[i]);
+                Console.WriteLine("Amount: " + Amount[i]);
+                Console.WriteLine("State of Account: " + StatesOfAccount[i]);
+            }
+        }
+
+
+        // function to delete an account
+        public static void DeletAccount()
+        {
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
+            // check if the ID already exists
+            if (!UserID.Contains(UserID))
+            {
+                Console.WriteLine("Invalid Account Number");
+                return;
+            }
+            if (StatesOfAccount[UserID.IndexOf(UserID)] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the user .");
+                return;
+            }
+            // get the index of the account number
+            int index = UserID.IndexOf(UserID);
+            // remove the account from the list
+            AccounstNumber.RemoveAt(index);
+            UserName.RemoveAt(index);
+            Age.RemoveAt(index);
+            Userspassword.RemoveAt(index);
+            UserID.Remove(index);
+            UserNationalID.RemoveAt(index);
+            Amount.RemoveAt(index);
+            StatesOfAccount.RemoveAt(index);
+            
+
+
+        }
+
+
+
+
+        // ============================================================================Files functions==========================================================================
 
 
     }
-    
-    }
+
+
+
+}
 
  
