@@ -21,6 +21,7 @@ namespace MiniBankSystemProject
         static List<int> Age = new List<int>();
         static List<string> AccounstNumber = new List<string>();
         static List<string> Userspassword = new List<string>();
+        static Stack<string> Review = new Stack<string>();
         static List<double> Amount = new List<double>();
         static List<string> StatesOfAccount = new List<string>();
         static Queue<string> CreatAccountreadRequest = new Queue<string>();
@@ -127,8 +128,12 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Invalid amount. Please enter a valid number greater than " + MinimumBalance);
                 return;
             }
-            // use the creat account function
-            CreateAccount(username, age, password, amount);
+            // add the request to the CreatAccountreadReques
+            CreatAccountreadRequest.Enqueue(username);
+            Console.WriteLine("Account creation request submitted successfully!");
+            
+
+
 
 
 
@@ -335,6 +340,23 @@ namespace MiniBankSystemProject
             Console.WriteLine("Account not found.");
         }
         // function to submit a review
+        static void SubmitReview()
+        {
+            Console.WriteLine("Please enter your review:");
+            string review = Console.ReadLine();
+            Review.Push(review);
+            Console.WriteLine("Review submitted successfully!");
+        }
+        // function to view reviews
+        static void ViewReviews()
+        {
+            Console.WriteLine("Reviews:");
+            foreach (var review in Review)
+            {
+                Console.WriteLine(review);
+            }
+        }
+
 
 
 
