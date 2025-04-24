@@ -232,22 +232,24 @@ namespace MiniBankSystemProject
             switch (choice)
             {
                 case "1":
+                   CheakActiveAccounet();
+                case "2":
                     ViewAccountBalance();
                     break;
-                case "2":
+                case "3":
                     DepositMoney();
                     break;
-                case "3":
+                case "4":
                     WithdrawMoney();
                     break;
-                case "4":
+                case "5":
                     ViewTransactionsHistory();
                     break;
                 case "6":
                     RequsetBlockRequset();
                     break;
-                case "5":
-                    WelcomeScreen();
+                case "7":
+                    submitReview();
                     break;
                 default:
                     Console.WriteLine("Invalid choice. Please try again.");
@@ -398,7 +400,51 @@ namespace MiniBankSystemProject
 
 
         }
-        //
+        // function to withdraw money 
+        static public void withdraw() {
+            
+            Console.WriteLine("Please enter the amount of money you want to withdraw:");
+            double amount = double.Parse(Console.ReadLine());
+            // get the index of the account number
+            int index = AccounstNumber.IndexOf(UserID);
+            // check if the amount is valid
+            if (amount <= 0)
+            {
+                Console.WriteLine("Invalid amount. Please try again.");
+                return;
+            }
+            double balance = Amount[index];
+            // check if the account is blocked
+            if (StatesOfAccount[index] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the admin.");
+                return;
+            }
+            // check if the amount is less than the balance
+            if (amount > balance)
+            {
+                Console.WriteLine("Invalid amount. Please try again.");
+                return;
+            }
+            // subtract the amount from the balance
+            balance -= amount;
+            // add the amount to the history of transactions
+            HistoryTranscations.Add(amount, "Withdraw");
+            // update the balance of the account
+            Amount[index] = balance;
+            Console.WriteLine("Your account balance is: " + balance);
+
+        }
+        // cheak active accounst 
+        
+        
+
+
+
+
+
+    }
+    
     }
 
-}  
+ 
