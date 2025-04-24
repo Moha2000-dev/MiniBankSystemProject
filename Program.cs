@@ -85,7 +85,6 @@ namespace MiniBankSystemProject
                     break;
                 case "3":
                     Console.WriteLine("Thank you for using " + BankName); // exit the program
-                    WelcomeScreen();
                     break;
                 default:
                     Console.WriteLine("Invalid choice. Please try again."); // invalid choice
