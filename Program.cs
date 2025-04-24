@@ -13,7 +13,8 @@ namespace MiniBankSystemProject
         const string AccountsFilePath = "accounts.txt"; // file path for accounts
         const string ReviewsFilePath = "reviews.txt"; // file path for reviews
         const string LoginFilePath = "login.txt"; // file path for login
-
+        const string RequsetBlockAccounts = "RequsetBlockAccounts.txt"; // file path for transactions
+        const string RequestCreatAccounts = "RequestCreatAccounts.txt"; // file path for transactions
 
         // global list (parallel)
         static List<string> UserName = new List<string>();
@@ -22,6 +23,7 @@ namespace MiniBankSystemProject
         static List<string> Userspassword = new List<string>();
         static List<string> AdminID = new List<string>();
         static List<string> UserID = new List<string>();
+        static List<string> UserNationalID = new List<string>();
         static List<string> AdminPassword = new List<string>();
         static Stack<string> Review = new Stack<string>();
         static List<double> Amount = new List<double>();
@@ -182,7 +184,7 @@ namespace MiniBankSystemProject
         // function to creat user menu
         static void User()
         {
-            Console.WriteLine("Please enter your ID:");
+            Console.WriteLine("Please enter your userID:");
             string id = Console.ReadLine();
             Console.WriteLine("Please enter your password:");
             string password = Console.ReadLine();
@@ -204,7 +206,7 @@ namespace MiniBankSystemProject
                     switch (choice)
                     {
                         case "1":
-                            CreateACcountRequest();
+                            CreateACountRequest();
                             break;
                         case "2":
                             Console.WriteLine("Thank you for using " + BankName);
@@ -242,7 +244,7 @@ namespace MiniBankSystemProject
                     ViewTransactionsHistory();
                     break;
                 case "6":
-                   RequsetBlockRequset();
+                    RequsetBlockRequset();
                     break;
                 case "5":
                     WelcomeScreen();
@@ -255,7 +257,7 @@ namespace MiniBankSystemProject
 
 
         // function to request to creat an account
-        static void CreateACcountRequest()
+        static void CreateACountRequest()
         {
             Console.WriteLine("Please enter your name:");
             string name = Console.ReadLine();
@@ -263,6 +265,10 @@ namespace MiniBankSystemProject
             int age = int.Parse(Console.ReadLine());
             Console.WriteLine("Please enter your password:");
             string password = Console.ReadLine();
+            Console.WriteLine("Please enter your National ID:");
+            string nationalID = Console.ReadLine();
+            Console.WriteLine("Please enter your mony amount(must be ,ore than 100):");
+            double amount = double.Parse(Console.ReadLine());
             // check if the ID already exists
             string accountNumber = "account" + AccounstNumber.Count;
             if (AccounstNumber.Contains(accountNumber))
@@ -270,12 +276,23 @@ namespace MiniBankSystemProject
                 Console.WriteLine("ID already exists. Please try again.");
                 return;
             }
+            // check if the age is valid
+            if (age < 18)
+            {
+                Console.WriteLine("You must be at least 18 years old to create an account.");
+                return;
+            }
+
             // concatonate the wordadmin and id in one string and add it to the list of admin id 
             AccounstNumber.Add(accountNumber);
             UserName.Add(name);
             Age.Add(age);
             Userspassword.Add(password);
             CreatAccountreadRequest.Enqueue(accountNumber);
+            StatesOfAccount.Add("Inproces");
+            Amount.Add(amount);
+            UserID.Add(name + accountNumber);
+
             Console.WriteLine("Account request created successfully.");
 
         }
@@ -312,9 +329,76 @@ namespace MiniBankSystemProject
             double balance = Amount[index];
             Console.WriteLine("Your account balance is: " + balance);
         }
+        // function to deposit money
+        public static void DepositMoney(string UserID)
+        {
+            Console.WriteLine("Please enter the Amount of mony you want to Deposit");
+            double amount = double.Parse(Console.ReadLine());
+            // get the index of the account number
+            int index = AccounstNumber.IndexOf(UserID);
+            // check if the amount is valid
+            if (amount <= 0)
+            {
+                Console.WriteLine("Invalid amount. Please try again.");
+                return;
+            }
+            // check if the account is blocked
+            if (StatesOfAccount[index] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the admin.");
+                return;
+            }
+
+
+            // get the balance of the account
+            double balance = Amount[index];
+            //add the amount to the balance
+            balance += amount;
+        }
+        // function to creat user account
+        public static void createAccount(string UserID)
+        {
+            int IndexOfUser = UserID.IndexOf(UserID);
+            if (IndexOfUser == -1)
+            {
+                Console.WriteLine("Invalid UserID");
+
+            }
+            else
+            {
+                // check if the account is blocked
+                if (StatesOfAccount[IndexOfUser] == "Blocked")
+                {
+                    Console.WriteLine("Your account is blocked");
+                    return;
+                }
+                // get the balance of the account
+                double balance = Amount[IndexOfUser];
+                if (StatesOfAccount[IndexOfUser] == "Inproces")
+                {
+                    if (balance < MinimumBalance)
+                    {
+                        Console.WriteLine("Your account balance is less than the minimum balance. Please deposit more money.");
+                        return;
+                    }
+                    else
+                    {
+                        StatesOfAccount[IndexOfUser] = "Active";
+                        Console.WriteLine("Your account is active.");
+                    }
+
+                }
+
+            }
+
+
+          
 
 
 
+
+        }
+        //
     }
 
 }  
