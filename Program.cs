@@ -127,7 +127,10 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Invalid amount. Please enter a valid number greater than " + MinimumBalance);
                 return;
             }
-            // Add account creation logic here 
+            // use the creat account function
+            CreateAccount(username, age, password, amount);
+
+
 
         }
         // functions get  requset of the creat account and add it to the list 
@@ -157,8 +160,187 @@ namespace MiniBankSystemProject
             Console.WriteLine("Amount: " + Amount[Amount.Count - 1]);
             Console.WriteLine("State of Account: " + StatesOfAccount[StatesOfAccount.Count - 1]);
         }
-        //
-        
+
+        // function to deposit money
+        static void DepositMoney()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            Console.WriteLine("Please enter the amount to deposit:");
+            string amountInput = Console.ReadLine();
+            double amount;
+            if (!double.TryParse(amountInput, out amount) || amount < 0)
+            {
+                Console.WriteLine("Invalid amount. Please enter a valid number.");
+                return;
+            }
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    Amount[i] += amount;
+                    Console.WriteLine("Deposit successful! New balance: " + Amount[i]);
+                    return;
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // function to withdraw money 
+        static void WithdrawMoney()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            Console.WriteLine("Please enter the amount to withdraw:");
+            string amountInput = Console.ReadLine();
+            double amount;
+            if (!double.TryParse(amountInput, out amount) || amount < 0)
+            {
+                Console.WriteLine("Invalid amount. Please enter a valid number.");
+                return;
+            }
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    if (Amount[i] >= amount)
+                    {
+                        Amount[i] -= amount;
+                        Console.WriteLine("Withdrawal successful! New balance: " + Amount[i]);
+                        return;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Insufficient funds.");
+                        return;
+                    }
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // cheak the balance of the account
+        static void CheckBalance()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    Console.WriteLine("Current balance: " + Amount[i]);
+                    return;
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // function to transfer money
+        static void TransferMoney()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            Console.WriteLine("Please enter the recipient's account number:");
+            string recipientAccountNumber = Console.ReadLine();
+            Console.WriteLine("Please enter the amount to transfer:");
+            string amountInput = Console.ReadLine();
+            double amount;
+            if (!double.TryParse(amountInput, out amount) || amount < 0)
+            {
+                Console.WriteLine("Invalid amount. Please enter a valid number.");
+                return;
+            }
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    if (Amount[i] >= amount)
+                    {
+                        Amount[i] -= amount;
+                        // Check if the recipient's account exists
+                        for (int j = 0; j < AccounstNumber.Count; j++)
+                        {
+                            if (AccounstNumber[j] == recipientAccountNumber)
+                            {
+                                Amount[j] += amount;
+                                Console.WriteLine("Transfer successful! New balance: " + Amount[i]);
+                                return;
+                            }
+                        }
+                        Console.WriteLine("Recipient account not found.");
+                        return;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Insufficient funds.");
+                        return;
+                    }
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // function to view transaction history
+        static void ViewLastTransaction()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    Console.WriteLine("Transaction history for account " + accountNumber + ":");
+                    foreach (var transaction in HistoryTranscations)
+                    {
+                        Console.WriteLine("Amount: " + transaction.Key + ", Description: " + transaction.Value);
+                    }
+                    return;
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // function to requset to block the account
+        static void BlockAccountRequest()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    blookAccountreadRequest.Enqueue(accountNumber);
+                    Console.WriteLine("Block account request submitted successfully!");
+                    return;
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // function to requset to delete the account
+        public static void BlockAccountResponse()
+        {
+            Console.WriteLine("Please enter your account number:");
+            string accountNumber = Console.ReadLine();
+            // Check if the account exists
+            for (int i = 0; i < AccounstNumber.Count; i++)
+            {
+                if (AccounstNumber[i] == accountNumber)
+                {
+                    AccountreadRequest.Push(accountNumber);
+                    Console.WriteLine("Delete account request submitted successfully!");
+                    return;
+                }
+            }
+            Console.WriteLine("Account not found.");
+        }
+        // function to submit a review
+
+
+
+
+
+
 
     }
 
