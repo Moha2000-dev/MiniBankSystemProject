@@ -15,7 +15,7 @@ namespace MiniBankSystemProject
         const string LoginFilePath = "login.txt"; // file path for login
         const string RequsetBlockAccounts = "RequsetBlockAccounts.txt"; // file path for transactions
         const string RequestCreatAccounts = "RequestCreatAccounts.txt"; // file path for transactions
-        const string RequestDeletAccounts = "RequestDeletAccounts.txt"; // file path for transactions
+        const string RequestDeletAccountsFile = "RequestDeletAccounts.txt"; // file path for transactions
 
         // global list (parallel)
         static List<string> UserName = new List<string>();
@@ -69,94 +69,162 @@ namespace MiniBankSystemProject
         //creat the welcom function
         static string WelcomeScreen()
         {
-            Console.WriteLine("Welcome to " + BankName);
-            Console.WriteLine("Please select an option:");
-            Console.WriteLine("1.admin");
-            Console.WriteLine("2.user ");
-            Console.WriteLine("3. Exit");
-            string choice = Console.ReadLine();
-            switch (choice)
+            try
             {
-                case "1":
-                    Admin(); // admin function
-                    break;
-                case "2":
-                    User(); // user function
-                    break;
-                case "3":
-                    Console.WriteLine("Thank you for using " + BankName); // exit the program
-                    break;
-                default:
-                    Console.WriteLine("Invalid choice. Please try again."); // invalid choice
-                    break;
+                // Display welcome message and menu options
+                Console.WriteLine("Welcome to " + BankName);
+                Console.WriteLine("Please select an option:");
+                Console.WriteLine("1. Admin");
+                Console.WriteLine("2. User");
+                Console.WriteLine("3. Exit");
+
+                // Read the user's choice
+                string choice = Console.ReadLine();
+
+                // Process the user's choice
+                switch (choice)
+                {
+                    case "1":
+                        Admin(); // Call the Admin function
+                        break;
+                    case "2":
+                        User(); // Call the User function
+                        break;
+                    case "3":
+                        Console.WriteLine("Thank you for using " + BankName); // Exit message
+                        break;
+                    default:
+                        Console.WriteLine("Invalid choice. Please try again."); // Handle invalid input
+                        break;
+                }
+
+                // Return the user's choice
+                return choice;
             }
-            return choice;
+            catch (Exception ex)
+            {
+                // Handle any unexpected errors
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return "error"; // Optional: return an error indicator
+            }
+
 
         }
+
+
+
+        // +++++++++++++++++++++++++++++++++++++++++++++++++++++++admin functions +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         // function to creat Admin Account
         static void CreateAdminAccount()
         {
 
-            Console.WriteLine("Please enter your  National ID ");
-            string id = Console.ReadLine();
-            Console.WriteLine("Please enter your password:");
-            string password = Console.ReadLine();
-            // check if the ID already exists
-            string adminID = "admin" + id;
-            if (AdminID.Contains(adminID))
+            try
             {
-                Console.WriteLine("ID already exists. Please try again.");
-                WelcomeScreen();
-                return;
-            }
-            // concatonate the wordadmin and id in one string and add it to the list of admin id 
+                // Ask the user to enter National ID
+                Console.WriteLine("Please enter your National ID:");
+                string id = Console.ReadLine();
 
-            AdminID.Add(adminID);
-            AdminPassword.Add(password);
-            Console.WriteLine("Admin account created successfully.");
-            // save the login information to the file
-            SaveLoginToFile();
-           
-            // return to the admin menu
-            AdminMenu();
+                // Ask the user to enter a password
+                Console.WriteLine("Please enter your password:");
+                string password = Console.ReadLine();
+
+                // Combine "admin" + ID to create a unique admin ID
+                string adminID = "admin" + id;
+
+                // Check if this admin ID already exists
+                if (AdminID.Contains(adminID))
+                {
+                    Console.WriteLine("ID already exists. Please try again.");
+
+                    // Return to the welcome screen if ID is already taken
+                    WelcomeScreen();
+                    return;
+                }
+
+                // Add the new admin ID and password to the lists
+                AdminID.Add(adminID);
+                AdminPassword.Add(password);
+
+                Console.WriteLine("Admin account created successfully.");
+
+                // Save the new login information to the file
+                SaveLoginToFile();
+
+                // Return to the Admin Menu
+                AdminMenu();
+            }
+            catch (Exception ex)
+            {
+                // Handle any unexpected errors
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+
         }
         // mune function for admin ask for the AdminID and password if not creat or try againe the account if yes open the admin menu
         static void Admin()
         {
-            Console.WriteLine("Please enter your AdminID:");
-            string id = Console.ReadLine();
-            Console.WriteLine("Please enter your password:");
-            string password = Console.ReadLine();
-            // check if the ID and password are correct
-            for (int i = 0; i < AdminID.Count; i++)
+
+            try
             {
-                if (AdminID[i] == id && AdminPassword[i] == password)
+                // Ask the user to enter Admin ID
+                Console.WriteLine("Please enter your AdminID:");
+                string id = Console.ReadLine();
+
+                // Ask the user to enter password
+                Console.WriteLine("Please enter your password:");
+                string password = Console.ReadLine();
+
+                // Check if the ID and password match any existing admin account
+                bool isValidAdmin = false; // flag to track login success
+                for (int i = 0; i < AdminID.Count; i++)
                 {
-                    Console.WriteLine("Welcome, " + id);
-                    AdminMenu();
-                    return;
+                    if (AdminID[i] == id && AdminPassword[i] == password)
+                    {
+                        Console.WriteLine("Welcome, " + id);
+                        AdminMenu(); // go to admin menu
+                        isValidAdmin = true;
+                        return; // exit after successful login
+                    }
                 }
-                
+
+                // If not valid, ask the user if they want to create a new admin account
+                if (!isValidAdmin)
+                {
+                    Console.WriteLine("Invalid ID or password. Do you want to create an admin account?");
+                    Console.WriteLine("1. Yes");
+                    Console.WriteLine("2. No");
+
+                    // Read the user's choice
+                    string inputChoice = Console.ReadLine();
+                    int choice;
+
+                    // Try to parse the input into an integer
+                    if (int.TryParse(inputChoice, out choice))
+                    {
+                        switch (choice)
+                        {
+                            case 1:
+                                CreateAdminAccount(); // create a new admin account
+                                break;
+                            case 2:
+                                Console.WriteLine("Thank you for using " + BankName); // exit message
+                                break;
+                            default:
+                                Console.WriteLine("Invalid choice. Please select 1 or 2."); // invalid option
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid input. Please enter a number (1 or 2)."); // input is not a number
+                    }
+                }
             }
-            
-            
-           Console.WriteLine("Invalid ID or password. Do you want to creat an admin account ");
-           Console.WriteLine("1. Yes");
-           Console.WriteLine("2. No");
-           string choice = Console.ReadLine();
-           switch (choice)
-             {
-                case "1":
-                        CreateAdminAccount();
-                        break;
-                 case "2":
-                        Console.WriteLine("Thank you for using " + BankName);
-                        break;
-                 default:
-                        Console.WriteLine("Invalid choice. Please try again.");
-                        break;
-                }
-            
+            catch (Exception ex)
+            {
+                // Catch and display any unexpected errors
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
 
 
         }// Admin menu function
@@ -213,6 +281,29 @@ namespace MiniBankSystemProject
             }
 
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // function to creat user menu
         static void User()
         {
@@ -257,9 +348,11 @@ namespace MiniBankSystemProject
             Console.WriteLine("2. View account balance");
             Console.WriteLine("3. Deposit money");
             Console.WriteLine("4. Withdraw money");
-            Console.WriteLine("5. View transactions history");
-            
-            Console.WriteLine("8. Exit");
+            Console.WriteLine("5. RView Transactions History");
+            Console.WriteLine("6. Request to block an account");
+            Console.WriteLine("7. submit Review");
+            Console.WriteLine("8. Request to delete an account");
+            Console.WriteLine("9. Exit");
             string choice = Console.ReadLine();
 
             switch (choice)
@@ -286,6 +379,9 @@ namespace MiniBankSystemProject
                     submitReview();
                     break;
                 case "8":
+                    RequestDeletAccounts();
+                    break;
+                case "9":
                     Console.WriteLine("Thanks for  using " + BankName);
                     WelcomeScreen();
                     break;
@@ -328,7 +424,7 @@ namespace MiniBankSystemProject
             UserName.Add(name);
             Age.Add(age);
             Userspassword.Add(password);
-            CreatAccountreadRequest.Enqueue(accountNumber);
+            CreatAccountreadRequest.Enqueue(name + accountNumber);
             StatesOfAccount.Add("Inproces");
             Amount.Add(amount);
             UserID.Add(name + accountNumber);
@@ -598,29 +694,39 @@ namespace MiniBankSystemProject
         // functions to viwe   View Acounet Request();
         public static void ViewAcounetRequest()
         {
-            Console.WriteLine("Please enter your UserID");
-            string UserID = Console.ReadLine();
-            // check if the ID already exists
-            if (!UserID.Contains(UserID))
+            // while loop to not  exit  until the  user say yes 
+            bool exit = true;
+            while (exit)
             {
-                Console.WriteLine("Invalid Account Number");
-                return;
+
+
+
+                Console.WriteLine("Please enter your UserID");
+                string UserID = Console.ReadLine();
+                // check if the ID already exists
+                if (!UserID.Contains(UserID))
+                {
+                    Console.WriteLine("Invalid Account Number");
+                    return;
+                }
+                // get the history of transactions
+                foreach (string transaction in CreatAccountreadRequest)
+                {
+                    Console.WriteLine("requsets ther is one requset  " + transaction);
+                }
+                Console.WriteLine("Do you want to exit (yes/no)");
+                string choice = Console.ReadLine();
+                if (choice.ToLower() == "yes")
+                {
+                    exit = false;
+
+                }
+                   
+
+
             }
-            // get the index of the account number
-            int index = UserID.IndexOf(UserID);
-            // check if the account is blocked
-            if (StatesOfAccount[index] == "Blocked")
-            {
-                Console.WriteLine("Your account is blocked. Please contact the admin.");
-                return;
-            }
-            // check if the account is in proces
-            // get the history of transactions
-            foreach (string transaction in CreatAccountreadRequest)
-            {
-                Console.WriteLine("Transaction: " + transaction);
-            }
-            WelcomeScreen();
+
+                WelcomeScreen();
         }
 
         public static void BlockAccount()
@@ -738,6 +844,29 @@ namespace MiniBankSystemProject
 
 
 
+        }
+        // function to request to delete an account
+        public static void RequestDeletAccounts()
+        {
+            Console.WriteLine("Please enter your UserID");
+            string UserID = Console.ReadLine();
+            // check if the ID already exists
+            if (!UserID.Contains(UserID))
+            {
+                Console.WriteLine("Invalid Account Number");
+                return;
+            }
+            // get the index of the account number
+            int index = UserID.IndexOf(UserID);
+            // check if the account is blocked
+            if (StatesOfAccount[index] == "Blocked")
+            {
+                Console.WriteLine("Your account is blocked. Please contact the user .");
+                return;
+            }
+            // add the account number to the delete accounts list
+            AccountDeletRequest.Push(AccounstNumber[index]);
+            Console.WriteLine("Your account has been deleted successfully.");
         }
 
 
@@ -959,7 +1088,7 @@ namespace MiniBankSystemProject
         {
             try
             {
-                using (StreamWriter writer = new StreamWriter(RequestDeletAccounts))
+                using (StreamWriter writer = new StreamWriter(RequestDeletAccountsFile))
                 {
                     foreach (string request in AccountDeletRequest)
                     {
@@ -977,7 +1106,7 @@ namespace MiniBankSystemProject
         {
             try
             {
-                using (StreamReader reader = new StreamReader(RequestDeletAccounts))
+                using (StreamReader reader = new StreamReader(RequestDeletAccountsFile))
                 {
                     string line;
                     while ((line = reader.ReadLine()) != null)
