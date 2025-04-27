@@ -253,11 +253,13 @@ namespace MiniBankSystemProject
         {
             Console.WriteLine("Welcome to the user menu.");
             Console.WriteLine("Please select an option:");
-            Console.WriteLine("1. View account balance");
-            Console.WriteLine("2. Deposit money");
-            Console.WriteLine("3. Withdraw money");
-            Console.WriteLine("4. View transactions history");
-            Console.WriteLine("5. Exit");
+            Console.WriteLine("1. cheak your accountd stat:");
+            Console.WriteLine("2. View account balance");
+            Console.WriteLine("3. Deposit money");
+            Console.WriteLine("4. Withdraw money");
+            Console.WriteLine("5. View transactions history");
+            
+            Console.WriteLine("8. Exit");
             string choice = Console.ReadLine();
 
             switch (choice)
@@ -282,6 +284,10 @@ namespace MiniBankSystemProject
                     break;
                 case "7":
                     submitReview();
+                    break;
+                case "8":
+                    Console.WriteLine("Thanks for  using " + BankName);
+                    WelcomeScreen();
                     break;
                 default:
                     Console.WriteLine("Invalid choice. Please try again.");
@@ -393,6 +399,7 @@ namespace MiniBankSystemProject
             double balance = Amount[index];
             //add the amount to the balance
             balance += amount;
+            Amount[index] = balance;
         }
         // function to creat user account
         public static void CreateAccount()
