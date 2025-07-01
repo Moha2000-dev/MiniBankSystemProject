@@ -40,7 +40,9 @@ namespace MiniBankSystemProject
         static List<string> UserAddresses = new List<string>();
         static List<bool> HasActiveLoan = new List<bool>(); // Parallel to users
         static Queue<string> LoanRequests = new Queue<string>(); // Stores UserIDs
-        static Dictionary<string, (double Amount, double Interest)> LoanDetails = new Dictionary<string, (double, double)>();
+        static Dictionary<string, (double Amount, double Interest)> LoanDetails = new Dictionary<string, (double, double)>(); // 
+        static List<int> UserFeedbackRatings = new List<int>();  //User Feedback  Add Storage List
+
 
 
 
@@ -76,6 +78,38 @@ namespace MiniBankSystemProject
             // save the reviews to the file
             SaveReviewsToFile();
             // exit the program
+            Console.WriteLine("Would you like to back up your data before exiting? (yes/no)");
+            string input = Console.ReadLine().ToLower();
+
+            if (input == "yes")
+            {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
+                string fileName = $"Backup_{timestamp}.txt";
+
+                using (StreamWriter writer = new StreamWriter(fileName))
+                {
+                    writer.WriteLine("== ACCOUNTS ==");
+                    for (int i = 0; i < AccounstNumber.Count; i++)
+                    {
+                        writer.WriteLine($"{AccounstNumber[i]}, {UserName[i]}, {Amount[i]}, {StatesOfAccount[i]}");
+                    }
+
+                    writer.WriteLine("\n== TRANSACTIONS ==");
+                    foreach (var t in HistoryTransactions)
+                    {
+                        writer.WriteLine($"{t.UserID}, {t.Date}, {t.Amount}, {t.Type}");
+                    }
+
+                    writer.WriteLine("\n== FEEDBACK ==");
+                    foreach (var f in UserFeedbackRatings)
+                    {
+                        writer.WriteLine($"Rating: {f}");
+                    }
+                }
+
+                Console.WriteLine($"Backup saved to {fileName}");
+            }
+
         }
         //creat the welcom function
         static string WelcomeScreen()
@@ -152,6 +186,13 @@ namespace MiniBankSystemProject
                     WelcomeScreen();
                     return;
                 }
+                // v2 Admin Authentication 
+                if (!id.StartsWith("admin"))
+                {
+                    Console.WriteLine("Access denied. Invalid admin ID format.");
+                    return;
+                }
+
 
                 // Add the new admin ID and password to the lists
                 AdminID.Add(adminID);
@@ -271,6 +312,8 @@ namespace MiniBankSystemProject
                     Console.WriteLine("8. Proceed to Delete account");
                     Console.WriteLine("9. Exit");
                     Console.WriteLine("10. Review Loan Requests");
+                    Console.WriteLine("11. View Average User Feedback");
+
 
 
                     // Read the user input
@@ -310,9 +353,13 @@ namespace MiniBankSystemProject
                             case 9:
                                 flag = false; // Return to welcome screen
                                 break;
-                            case "10":
+                            case 10:
                                 ReviewLoans();
                                 break;
+                            case 11:
+                                ViewFeedbackStats();
+                                break;
+
 
                             default:
                                 // Handle invalid option (not between 1-9)
@@ -737,6 +784,7 @@ namespace MiniBankSystemProject
             Console.WriteLine("11. Generate Monthly Statement"); // Generate Monthly Statement v2
             Console.WriteLine("12. Update Phone Number or Address");
             Console.WriteLine("13. Request a Loan"); // Request a loan
+            Console.WriteLine("14. View Recent Transactions or by Date");
 
 
             string choice = Console.ReadLine();
@@ -785,6 +833,11 @@ namespace MiniBankSystemProject
                 case "13":
                     RequestLoan();
                     break;
+                case "14":
+                    FilteredTransactionView();
+                    break;
+
+
 
 
 
@@ -938,6 +991,18 @@ namespace MiniBankSystemProject
                 Console.WriteLine($"Deposit successful. New balance: {Amount[index]}");
                 HistoryTransactions.Add((UserID[index], DateTime.Now, amount, "Deposit"));
 
+
+                //new test 
+                Console.WriteLine("Rate the service (1 to 5):");
+                if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
+                {
+                    UserFeedbackRatings.Add(rating);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid rating. Skipped.");
+                }
+
             }
             catch (Exception ex)
             {
@@ -984,6 +1049,17 @@ namespace MiniBankSystemProject
                 Console.WriteLine($"Deposit successful. New balance: {Amount[index]}");
                 HistoryTransactions.Add((UserID[index], DateTime.Now, amount, "Withdraw"));
 
+
+                // new feutres 
+                Console.WriteLine("Rate the service (1 to 5):");
+                if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
+                {
+                    UserFeedbackRatings.Add(rating);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid rating. Skipped.");
+                }
 
             }
             catch (Exception ex)
@@ -1232,6 +1308,19 @@ namespace MiniBankSystemProject
 
                 // Now call the TransferMoney method you built earlier
                 TransferMoney(senderID, receiverID, amount);
+
+
+
+                Console.WriteLine("Rate the service (1 to 5):");
+                if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
+                {
+                    UserFeedbackRatings.Add(rating);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid rating. Skipped.");
+                }
+
             }
             catch (Exception ex)
             {
@@ -1722,8 +1811,56 @@ namespace MiniBankSystemProject
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error reviewing loans: " + ex.Message);
+                Console.WriteLine("Error rwed       QWR Q WEReviewing loans: " + ex.Message);
             }
+        }
+        // FilteredTransactionView function 
+        public static void FilteredTransactionView()
+        {
+            Console.WriteLine("Enter your UserID:");
+            string userID = Console.ReadLine();
+
+            Console.WriteLine("Choose filter:");
+            Console.WriteLine("1. Last N transactions");
+            Console.WriteLine("2. Transactions after specific date");
+
+            string choice = Console.ReadLine();
+            if (choice == "1")
+            {
+                Console.WriteLine("How many recent transactions to view?");
+                int count = int.Parse(Console.ReadLine());
+
+                var recent = HistoryTransactions
+                    .Where(t => t.UserID == userID)
+                    .OrderByDescending(t => t.Date)
+                    .Take(count);
+
+                foreach (var t in recent)
+                    Console.WriteLine($"{t.Date}: {t.Type} - {t.Amount}");
+            }
+            else if (choice == "2")
+            {
+                Console.WriteLine("Enter date (yyyy-mm-dd):");
+                DateTime date = DateTime.Parse(Console.ReadLine());
+
+                var filtered = HistoryTransactions
+                    .Where(t => t.UserID == userID && t.Date > date);
+
+                foreach (var t in filtered)
+                    Console.WriteLine($"{t.Date}: {t.Type} - {t.Amount}");
+            }
+        }
+        // ViewFeedbackStats fuctions 
+        public static void ViewFeedbackStats()
+        {
+            if (UserFeedbackRatings.Count == 0)
+            {
+                Console.WriteLine("No feedback submitted yet.");
+                return;
+            }
+
+            double avg = UserFeedbackRatings.Average();
+            Console.WriteLine($"Average feedback score: {avg:F2} out of 5");
         }
 
 
