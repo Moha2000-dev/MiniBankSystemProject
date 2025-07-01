@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MiniBankSystemProject
 {
@@ -32,7 +35,9 @@ namespace MiniBankSystemProject
         static Queue<string> CreatAccountreadRequest = new Queue<string>();
         static Queue<string> blookAccountreadRequest = new Queue<string>();
         static Stack<string> AccountDeletRequest = new Stack<string>();
-        static Dictionary<double, string> HistoryTranscations = new Dictionary<double, string>();
+        static List<(string UserID, DateTime Date, double Amount, string Type)> HistoryTransactions= new List<(string, DateTime, double, string)>(); // fixd to use tuple for transactions history v2
+
+
 
 
 
@@ -173,13 +178,17 @@ namespace MiniBankSystemProject
 
                 // Ask the user to enter password
                 Console.WriteLine("Please enter your password:");
-                string password = Console.ReadLine();
+                string password = ReadPassword();
+                string hashedPassword = HashPassword(password);
+
 
                 // Check if the ID and password match any existing admin account
                 bool isValidAdmin = false; // flag to track login success
                 for (int i = 0; i < AdminID.Count; i++)
                 {
-                    if (AdminID[i] == id && AdminPassword[i] == password)
+                    string hashedInput = HashPassword(password);
+                    if (AdminID[i] == id && AdminPassword[i] == hashedInput)
+
                     {
                         Console.WriteLine("Welcome, " + id);
                         AdminMenu(); // go to admin menu
@@ -671,7 +680,8 @@ namespace MiniBankSystemProject
             // check if the ID and password are correct
             for (int i = 0; i < UserID.Count; i++)
             {
-                if (UserID[i] == id && Userspassword[i] == password)
+                string hashedInput = HashPassword(password);
+                if (UserID[i] == id && Userspassword[i] == hashedInput)
                 {
                     Console.WriteLine("Welcome, " + id);
                     UserMenu();
@@ -712,6 +722,8 @@ namespace MiniBankSystemProject
             Console.WriteLine("8. Request to delete an account");// Request to delete an account
             Console.WriteLine("9. Transfer money"); // Transfer money
             Console.WriteLine("10. Exit"); // Exit the program
+            Console.WriteLine("11. Generate Monthly Statement"); // Generate Monthly Statement v2
+
             string choice = Console.ReadLine();
 
             switch (choice)
@@ -747,6 +759,11 @@ namespace MiniBankSystemProject
                     Console.WriteLine("Thanks for  using " + BankName); // Exit message
                     WelcomeScreen();
                     break;
+                case "11":
+                    Console.WriteLine("Generating Monthly Statement..."); // Generate Monthly Statement
+                    GenerateMonthlyStatement();
+                    Console.WriteLine("Monthly Statement generated successfully.");
+                    break;
                 default:
                     Console.WriteLine("Invalid choice. Please try again."); 
                     break;
@@ -773,7 +790,9 @@ namespace MiniBankSystemProject
                 }
 
                 Console.WriteLine("Please enter your password:");
-                string password = Console.ReadLine();
+                string password = ReadPassword();
+                string hashedPassword = HashPassword(password);
+
 
                 Console.WriteLine("Please enter your National ID:");
                 string nationalID = Console.ReadLine();
@@ -884,6 +903,8 @@ namespace MiniBankSystemProject
 
                 Amount[index] += amount;
                 Console.WriteLine($"Deposit successful. New balance: {Amount[index]}");
+                HistoryTransactions.Add((UserID[index], DateTime.Now, amount, "Deposit"));
+
             }
             catch (Exception ex)
             {
@@ -926,9 +947,11 @@ namespace MiniBankSystemProject
                     return;
                 }
 
-                Amount[index] -= amount;
-                HistoryTranscations.Add(amount, "Withdraw");
-                Console.WriteLine($"Withdrawal successful. New balance: {Amount[index]}");
+                Amount[index] += amount;
+                Console.WriteLine($"Deposit successful. New balance: {Amount[index]}");
+                HistoryTransactions.Add((UserID[index], DateTime.Now, amount, "Withdraw"));
+
+
             }
             catch (Exception ex)
             {
@@ -1015,18 +1038,19 @@ namespace MiniBankSystemProject
                     return;
                 }
 
-                if (HistoryTranscations.Count == 0)
+                if (HistoryTransactions.Count == 0)
                 {
                     Console.WriteLine("No transactions found.");
                     return;
                 }
 
                 Console.WriteLine("Transactions:");
-                foreach (KeyValuePair<double, string> transaction in HistoryTranscations)
+                foreach (var transaction in HistoryTransactions)
                 {
-                    Console.WriteLine($"Amount: {transaction.Key}, Type: {transaction.Value}");
+                    Console.WriteLine($"Date: {transaction.Date}, Amount: {transaction.Amount}, Type: {transaction.Type}");
                 }
-                
+
+
             }
             catch (Exception ex)
             {
@@ -1037,7 +1061,7 @@ namespace MiniBankSystemProject
         }
 
         //submit a review
-        // Submit a review
+       
         public static void SubmitReview()
         {
             try
@@ -1141,7 +1165,9 @@ namespace MiniBankSystemProject
                 Amount[receiverIndex] += amount;
 
                 // Record the transaction
-                HistoryTranscations.Add(amount, $"Transfer from {senderID} to {receiverID}");
+                HistoryTransactions.Add((senderID, DateTime.Now, amount, $"Transfer to {receiverID}"));
+                HistoryTransactions.Add((receiverID, DateTime.Now, amount, $"Transfer from {senderID}"));
+
 
                 Console.WriteLine($"Transfer successful! {amount} transferred from {senderID} to {receiverID}.");
             }
@@ -1429,6 +1455,91 @@ namespace MiniBankSystemProject
                 Console.WriteLine("An error occurred while loading the requests from the file: " + ex.Message);
             }
         }
+
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++V2 functions +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        //read the password from the console without showing it
+        static string ReadPassword()
+        {
+            string password = "";
+            ConsoleKeyInfo key;
+
+            do
+            {
+                key = Console.ReadKey(true);
+                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
+                {
+                    password += key.KeyChar;
+                    Console.Write("*");
+                }
+                else if (key.Key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    password = password.Substring(0, password.Length - 1);
+                    Console.Write("\b \b");
+                }
+            } while (key.Key != ConsoleKey.Enter);
+
+            Console.WriteLine(); // Move to next line
+            return password;
+        }
+       // masking the functions so it can help 
+
+
+         static string HashPassword(string password)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            StringBuilder builder = new StringBuilder();
+            foreach (byte b in bytes)
+                builder.Append(b.ToString("x2")); // Convert to hexadecimal
+            return builder.ToString();
+        }
+    }
+        public static void GenerateMonthlyStatement()
+        {
+            try
+            {
+                Console.WriteLine("Enter your UserID:");
+                string userID = Console.ReadLine();
+
+                Console.WriteLine("Enter month (1-12):");
+                int month = int.Parse(Console.ReadLine());
+
+                Console.WriteLine("Enter year (e.g., 2025):");
+                int year = int.Parse(Console.ReadLine());
+
+                var userTransactions = HistoryTransactions
+                    .Where(t => t.UserID == userID && t.Date.Month == month && t.Date.Year == year)
+                    .ToList();
+
+                if (userTransactions.Count == 0)
+                {
+                    Console.WriteLine("No transactions found for this period.");
+                    return;
+                }
+
+                string fileName = $"Statement_{userID}_{year}-{month:D2}.txt";
+                using (StreamWriter writer = new StreamWriter(fileName))
+                {
+                    writer.WriteLine($"Monthly Statement for {userID} - {month:D2}/{year}");
+                    writer.WriteLine("--------------------------------------------------");
+                    foreach (var transaction in userTransactions)
+                    {
+                        writer.WriteLine($"{transaction.Date}: {transaction.Type} - {transaction.Amount}");
+                    }
+                }
+
+                Console.WriteLine($"Statement saved to {fileName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while generating the statement: " + ex.Message);
+            }
+        }
+
+
 
     }
 
