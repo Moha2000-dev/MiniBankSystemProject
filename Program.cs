@@ -36,6 +36,12 @@ namespace MiniBankSystemProject
         static Queue<string> blookAccountreadRequest = new Queue<string>();
         static Stack<string> AccountDeletRequest = new Stack<string>();
         static List<(string UserID, DateTime Date, double Amount, string Type)> HistoryTransactions= new List<(string, DateTime, double, string)>(); // fixd to use tuple for transactions history v2
+        static List<string> UserPhoneNumbers = new List<string>();
+        static List<string> UserAddresses = new List<string>();
+        static List<bool> HasActiveLoan = new List<bool>(); // Parallel to users
+        static Queue<string> LoanRequests = new Queue<string>(); // Stores UserIDs
+        static Dictionary<string, (double Amount, double Interest)> LoanDetails = new Dictionary<string, (double, double)>();
+
 
 
 
@@ -264,6 +270,8 @@ namespace MiniBankSystemProject
                     Console.WriteLine("7. Proceed to Create account");
                     Console.WriteLine("8. Proceed to Delete account");
                     Console.WriteLine("9. Exit");
+                    Console.WriteLine("10. Review Loan Requests");
+
 
                     // Read the user input
                     string input = Console.ReadLine();
@@ -302,6 +310,10 @@ namespace MiniBankSystemProject
                             case 9:
                                 flag = false; // Return to welcome screen
                                 break;
+                            case "10":
+                                ReviewLoans();
+                                break;
+
                             default:
                                 // Handle invalid option (not between 1-9)
                                 Console.WriteLine("Invalid choice. Please select a number between 1 and 9.");
@@ -723,6 +735,9 @@ namespace MiniBankSystemProject
             Console.WriteLine("9. Transfer money"); // Transfer money
             Console.WriteLine("10. Exit"); // Exit the program
             Console.WriteLine("11. Generate Monthly Statement"); // Generate Monthly Statement v2
+            Console.WriteLine("12. Update Phone Number or Address");
+            Console.WriteLine("13. Request a Loan"); // Request a loan
+
 
             string choice = Console.ReadLine();
 
@@ -764,6 +779,15 @@ namespace MiniBankSystemProject
                     GenerateMonthlyStatement();
                     Console.WriteLine("Monthly Statement generated successfully.");
                     break;
+                case "12":
+                    UpdateUserInfo(); // Update phone number or address
+                    break;
+                case "13":
+                    RequestLoan();
+                    break;
+
+
+
                 default:
                     Console.WriteLine("Invalid choice. Please try again."); 
                     break;
@@ -803,6 +827,14 @@ namespace MiniBankSystemProject
                     Console.WriteLine("Invalid amount. Must be more than 100.");
                     return;
                 }
+                Console.WriteLine("Please enter your phone number:");
+                string phone = Console.ReadLine();
+                UserPhoneNumbers.Add(phone);
+
+                Console.WriteLine("Please enter your address:");
+                string address = Console.ReadLine();
+                UserAddresses.Add(address);
+
 
                 // Generate new account number
                 string accountNumber = "account" + AccounstNumber.Count;
@@ -824,6 +856,7 @@ namespace MiniBankSystemProject
                 StatesOfAccount.Add("Inproces");
                 UserID.Add(name + accountNumber);
                 CreatAccountreadRequest.Enqueue(name + accountNumber);
+                HasActiveLoan.Add(false); // No loan by default
                 SaveAccountsToFile();
                 Console.WriteLine("Account request created successfully.");
                
@@ -1217,7 +1250,8 @@ namespace MiniBankSystemProject
                 {
                     for (int i = 0; i < AccounstNumber.Count; i++)
                     {
-                        writer.WriteLine(AccounstNumber[i] + "," + UserName[i] + "," + Age[i] + "," + Userspassword[i] + "," + UserNationalID[i] + "," + Amount[i] + "," + StatesOfAccount[i]);
+                        writer.WriteLine($"{AccounstNumber[i]},{UserName[i]},{Age[i]},{Userspassword[i]},{UserNationalID[i]},{Amount[i]},{StatesOfAccount[i]},{UserPhoneNumbers[i]},{UserAddresses[i]}");
+
                     }
                 }
             }
@@ -1237,6 +1271,7 @@ namespace MiniBankSystemProject
                     while ((line = reader.ReadLine()) != null)
                     {
                         string[] parts = line.Split(',');
+
                         AccounstNumber.Add(parts[0]);
                         UserName.Add(parts[1]);
                         Age.Add(int.Parse(parts[2]));
@@ -1244,7 +1279,10 @@ namespace MiniBankSystemProject
                         UserNationalID.Add(parts[4]);
                         Amount.Add(double.Parse(parts[5]));
                         StatesOfAccount.Add(parts[6]);
+                        UserPhoneNumbers.Add(parts[7]);
+                        UserAddresses.Add(parts[8]);
                     }
+
                 }
             }
             catch (Exception ex)
@@ -1497,6 +1535,9 @@ namespace MiniBankSystemProject
             return builder.ToString();
         }
     }
+
+
+        // GenerateMonthlyStatement()
         public static void GenerateMonthlyStatement()
         {
             try
@@ -1536,6 +1577,152 @@ namespace MiniBankSystemProject
             catch (Exception ex)
             {
                 Console.WriteLine("An error occurred while generating the statement: " + ex.Message);
+            }
+
+        }
+        //UpdateUserInfo()
+        public static void UpdateUserInfo()
+        {
+            try
+            {
+                Console.WriteLine("Enter your UserID:");
+                string userID = Console.ReadLine();
+
+                int index = UserID.IndexOf(userID);
+                if (index == -1)
+                {
+                    Console.WriteLine("Invalid UserID.");
+                    return;
+                }
+
+                Console.WriteLine("What would you like to update?");
+                Console.WriteLine("1. Phone Number");
+                Console.WriteLine("2. Address");
+                string choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        Console.WriteLine("Enter new phone number:");
+                        string newPhone = Console.ReadLine();
+                        UserPhoneNumbers[index] = newPhone;
+                        Console.WriteLine("Phone number updated successfully.");
+                        break;
+                    case "2":
+                        Console.WriteLine("Enter new address:");
+                        string newAddress = Console.ReadLine();
+                        UserAddresses[index] = newAddress;
+                        Console.WriteLine("Address updated successfully.");
+                        break;
+                    default:
+                        Console.WriteLine("Invalid choice.");
+                        break;
+                }
+
+                SaveAccountsToFile(); // Save changes
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while updating info: " + ex.Message);
+            }
+        }
+
+        // RequestLoan() 
+        public static void RequestLoan()
+        {
+            try
+            {
+                Console.WriteLine("Enter your UserID:");
+                string userID = Console.ReadLine();
+                int index = UserID.IndexOf(userID);
+
+                if (index == -1)
+                {
+                    Console.WriteLine("Invalid UserID.");
+                    return;
+                }
+
+                if (Amount[index] < 5000)
+                {
+                    Console.WriteLine("You must have at least 5000 to be eligible.");
+                    return;
+                }
+
+                if (HasActiveLoan[index])
+                {
+                    Console.WriteLine("You already have an active loan.");
+                    return;
+                }
+
+                Console.WriteLine("Enter loan amount:");
+                if (!double.TryParse(Console.ReadLine(), out double loanAmount) || loanAmount <= 0)
+                {
+                    Console.WriteLine("Invalid amount.");
+                    return;
+                }
+
+                Console.WriteLine("Enter interest rate (e.g., 5 for 5%):");
+                if (!double.TryParse(Console.ReadLine(), out double rate) || rate < 0)
+                {
+                    Console.WriteLine("Invalid interest rate.");
+                    return;
+                }
+
+                LoanRequests.Enqueue(userID);
+                LoanDetails[userID] = (loanAmount, rate);
+                Console.WriteLine("Loan request submitted. Awaiting admin approval.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error requesting loan: " + ex.Message);
+            }
+        }
+        
+        public static void ReviewLoans() // this fuctions ReviewLoans()
+        {
+            try
+            {
+                while (LoanRequests.Count > 0)
+                {
+                    string userID = LoanRequests.Dequeue();
+                    int index = UserID.IndexOf(userID);
+
+                    if (index == -1)
+                    {
+                        Console.WriteLine($"User {userID} not found.");
+                        continue;
+                    }
+
+                    var (amount, rate) = LoanDetails[userID];
+                    Console.WriteLine($"Loan request from {userID}");
+                    Console.WriteLine($"Amount: {amount}, Interest Rate: {rate}%");
+                    Console.WriteLine("1. Approve");
+                    Console.WriteLine("2. Reject");
+                    string decision = Console.ReadLine();
+
+                    if (decision == "1")
+                    {
+                        Amount[index] += amount;
+                        HasActiveLoan[index] = true;
+                        HistoryTransactions.Add((userID, DateTime.Now, amount, "Loan Approved"));
+                        Console.WriteLine("Loan approved and amount added to balance.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Loan request rejected.");
+                    }
+
+                    LoanDetails.Remove(userID);
+                }
+
+                if (LoanRequests.Count == 0)
+                {
+                    Console.WriteLine("No pending loan requests.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reviewing loans: " + ex.Message);
             }
         }
 
