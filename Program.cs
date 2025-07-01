@@ -54,66 +54,13 @@ namespace MiniBankSystemProject
 
         static void Main(string[] args)
         {
-            // load the accounts from the file
-            LoadAccountsToFile();
-            // load the login information from the file
-            LoadLoginToFile();
-            // load the requests to creat accounts from the file
-            LoadRequestCreatAccountsToFile();
-            // load the requests to delet accounts from the file
-            LoadRequestDeletAccountsToFile();
-            // load the requests to block accounts from the file
-            LoadRequestBlockAccountsToFile();
-            // load the reviews from the file
-            LoadReviewsToFile();
-            // show the welcome screen
-            WelcomeScreen();
-            // save the accounts to the file
-            SaveAccountsToFile();
-            // save the login information to the file
-            SaveLoginToFile();
-            // save the requests to creat accounts to the file
-            SaveRequestCreatAccountsToFile();
-            // save the requests to delet accounts to the file
-            SaveRequestDeletAccountsToFile();
-            // save the requests to block accounts to the file
-            SaveRequestBlockAccountsToFile();
-            // save the reviews to the file
-            SaveReviewsToFile();
-            // exit the program
-            Console.WriteLine("Would you like to back up your data before exiting? (yes/no)");
-            string input = Console.ReadLine().ToLower();
+            LoadAllData();        // Load everything
+            WelcomeScreen();      // Let user interact (admin or user)
+            SaveAllData();        // Save everything
 
-            if (input == "yes")
-            {
-                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
-                string fileName = $"Backup_{timestamp}.txt";
-
-                using (StreamWriter writer = new StreamWriter(fileName))
-                {
-                    writer.WriteLine("== ACCOUNTS ==");
-                    for (int i = 0; i < AccounstNumber.Count; i++)
-                    {
-                        writer.WriteLine($"{AccounstNumber[i]}, {UserName[i]}, {Amount[i]}, {StatesOfAccount[i]}");
-                    }
-
-                    writer.WriteLine("\n== TRANSACTIONS ==");
-                    foreach (var t in HistoryTransactions)
-                    {
-                        writer.WriteLine($"{t.UserID}, {t.Date}, {t.Amount}, {t.Type}");
-                    }
-
-                    writer.WriteLine("\n== FEEDBACK ==");
-                    foreach (var f in UserFeedbackRatings)
-                    {
-                        writer.WriteLine($"Rating: {f}");
-                    }
-                }
-
-                Console.WriteLine($"Backup saved to {fileName}");
-            }
-
+            PromptBackup();       // Ask user to create a backup
         }
+
         //creat the welcom function
         static string WelcomeScreen()
         {
@@ -2045,6 +1992,80 @@ namespace MiniBankSystemProject
             }
         }
 
+
+
+
+        // some improvement 
+
+        static void LoadAllData()
+        {
+            LoadAccountsToFile();
+            LoadLoginToFile();
+            LoadRequestCreatAccountsToFile();
+            LoadRequestDeletAccountsToFile();
+            LoadRequestBlockAccountsToFile();
+            LoadReviewsToFile();
+        }
+
+        static void SaveAllData()
+        {
+            SaveAccountsToFile();
+            SaveLoginToFile();
+            SaveRequestCreatAccountsToFile();
+            SaveRequestDeletAccountsToFile();
+            SaveRequestBlockAccountsToFile();
+            SaveReviewsToFile();
+        }
+
+        static void PromptBackup()
+        {
+            Console.WriteLine("Would you like to back up your data before exiting? (yes/no)");
+            string input = Console.ReadLine().Trim().ToLower();
+
+            if (input == "yes")
+            {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
+                string fileName = $"Backup_{timestamp}.txt";
+
+                try
+                {
+                    using (StreamWriter writer = new StreamWriter(fileName))
+                    {
+                        writer.WriteLine("== ACCOUNTS ==");
+                        for (int i = 0; i < AccounstNumber.Count; i++)
+                        {
+                            writer.WriteLine($"{AccounstNumber[i]}, {UserName[i]}, {Amount[i]}, {StatesOfAccount[i]}");
+                        }
+
+                        writer.WriteLine("\n== TRANSACTIONS ==");
+                        foreach (var t in HistoryTransactions)
+                        {
+                            writer.WriteLine($"{t.UserID}, {t.Date}, {t.Amount}, {t.Type}");
+                        }
+
+                        writer.WriteLine("\n== FEEDBACK ==");
+                        foreach (var f in UserFeedbackRatings)
+                        {
+                            writer.WriteLine($"Rating: {f}");
+                        }
+                    }
+
+                    Console.WriteLine($" Backup saved to: {fileName}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($" Failed to save backup: {ex.Message}");
+                }
+            }
+            else if (input == "no")
+            {
+                Console.WriteLine("No backup created.");
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Skipping backup.");
+            }
+        }
 
 
 
