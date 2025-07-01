@@ -42,6 +42,19 @@ namespace MiniBankSystemProject
         static Queue<string> LoanRequests = new Queue<string>(); // Stores UserIDs
         static Dictionary<string, (double Amount, double Interest)> LoanDetails = new Dictionary<string, (double, double)>(); // 
         static List<int> UserFeedbackRatings = new List<int>();  //User Feedback  Add Storage List
+        static Queue<(string UserID, DateTime AppointmentTime)> Appointments = new Queue<(string, DateTime)>();
+        static Dictionary<string, double> ExchangeRates = new Dictionary<string, double>()
+{
+    { "OMR", 1.0 },
+    { "USD", 3.8 },
+    { "EUR", 4.1 }
+}; // list to do the ExchangeRates
+        static Dictionary<string, int> FailedLoginAttempts = new Dictionary<string, int>();
+        static HashSet<string> LockedAccounts = new HashSet<string>();
+
+
+
+
 
 
 
@@ -228,6 +241,12 @@ namespace MiniBankSystemProject
                 string password = ReadPassword();
                 string hashedPassword = HashPassword(password);
 
+                if (LockedAccounts.Contains(id))
+                {
+                    Console.WriteLine("Account is locked. Contact admin.");
+                    return;
+                }
+
 
                 // Check if the ID and password match any existing admin account
                 bool isValidAdmin = false; // flag to track login success
@@ -313,11 +332,16 @@ namespace MiniBankSystemProject
                     Console.WriteLine("9. Exit");
                     Console.WriteLine("10. Review Loan Requests");
                     Console.WriteLine("11. View Average User Feedback");
+                    Console.WriteLine("12. View Full Transaction History");
+                    Console.WriteLine("17. Unlock Locked Accounts");
+                  
 
 
 
-                    // Read the user input
-                    string input = Console.ReadLine();
+
+
+                        // Read the user input
+                        string input = Console.ReadLine();
                     int choice;
 
                     // Try to parse the input into an integer
@@ -359,6 +383,13 @@ namespace MiniBankSystemProject
                             case 11:
                                 ViewFeedbackStats();
                                 break;
+                            case 12:
+                                PrintFullTransactionHistory();
+                                break;
+                            case 17:
+                                UnlockAccount();
+                                break;
+
 
 
                             default:
@@ -731,40 +762,64 @@ namespace MiniBankSystemProject
         // function to creat user 
         static void User()
         {
-            Console.Clear(); // Clear the console for a fresh start
+            Console.Clear(); // Fresh screen
+
             Console.WriteLine("Please enter your userID:");
             string id = Console.ReadLine();
-            Console.WriteLine("Please enter your password:");
-            string password = Console.ReadLine();
-            // check if the ID and password are correct
-            for (int i = 0; i < UserID.Count; i++)
+
+            // Check if account is locked
+            if (LockedAccounts.Contains(id))
             {
+                Console.WriteLine("Your account is locked. Please contact the admin to unlock it.");
+                return;
+            }
+
+            int index = UserID.IndexOf(id);
+            if (index == -1)
+            {
+                Console.WriteLine("User not found. Do you want to create an account?");
+                Console.WriteLine("1. Yes\n2. No");
+                string choice = Console.ReadLine();
+                switch (choice)
+                {
+                    case "1":
+                        CreateACountRequest();
+                        return;
+                    case "2":
+                        Console.WriteLine("Thank you for using " + BankName);
+                        return;
+                    default:
+                        Console.WriteLine("Invalid choice.");
+                        return;
+                }
+            }
+
+            // Password attempt logic
+            int attempts = 0;
+            while (attempts < 3)
+            {
+                Console.WriteLine("Please enter your password:");
+                string password = ReadPassword(); // Masked input
                 string hashedInput = HashPassword(password);
-                if (UserID[i] == id && Userspassword[i] == hashedInput)
+
+                if (Userspassword[index] == hashedInput)
                 {
                     Console.WriteLine("Welcome, " + id);
+                    FailedLoginAttempts[id] = 0; // reset on success
                     UserMenu();
                     return;
                 }
-                
+
+                attempts++;
+                Console.WriteLine($"Incorrect password. Attempts left: {3 - attempts}");
             }
-            Console.WriteLine("Invalid ID or password. Do you want to creat an account ");
-            Console.WriteLine("1. Yes");
-            Console.WriteLine("2. No");
-            string choice = Console.ReadLine();
-            switch (choice)
-            {
-                case "1":
-                    CreateACountRequest();
-                    break;
-                case "2":
-                    Console.WriteLine("Thank you for using " + BankName);
-                    break;
-                default:
-                    Console.WriteLine("Invalid choice. Please try again.");
-                    break;
-            }
+
+            // Lock the account after 3 failed tries
+            LockedAccounts.Add(id);
+            FailedLoginAttempts[id] = 3;
+            Console.WriteLine("Your account has been locked after 3 failed login attempts.");
         }
+
         // function to creat user menu
         static void UserMenu()
         {
@@ -785,6 +840,11 @@ namespace MiniBankSystemProject
             Console.WriteLine("12. Update Phone Number or Address");
             Console.WriteLine("13. Request a Loan"); // Request a loan
             Console.WriteLine("14. View Recent Transactions or by Date");
+            Console.WriteLine("15. View Full Transaction History");
+            Console.WriteLine("16. Book Appointment");
+
+
+
 
 
             string choice = Console.ReadLine();
@@ -835,6 +895,15 @@ namespace MiniBankSystemProject
                     break;
                 case "14":
                     FilteredTransactionView();
+                    break;
+
+
+                case "15":
+                    PrintFullTransactionHistory();
+                    break;
+
+                case "16":
+                    BookAppointment();
                     break;
 
 
@@ -980,19 +1049,33 @@ namespace MiniBankSystemProject
                     return;
                 }
 
-                Console.WriteLine("Please enter the amount to deposit:");
-                if (!double.TryParse(Console.ReadLine(), out double amount) || amount <= 0)
+
+
+                // /new method  
+                Console.WriteLine("Enter currency (OMR, USD, EUR):");
+                string currency = Console.ReadLine().ToUpper();
+
+                if (!ExchangeRates.ContainsKey(currency))
+                {
+                    Console.WriteLine("Unsupported currency.");
+                    return;
+                }
+
+                Console.WriteLine("Enter amount:");
+                if (!double.TryParse(Console.ReadLine(), out double originalAmount) || originalAmount <= 0)
                 {
                     Console.WriteLine("Invalid amount.");
                     return;
                 }
 
-                Amount[index] += amount;
-                Console.WriteLine($"Deposit successful. New balance: {Amount[index]}");
-                HistoryTransactions.Add((UserID[index], DateTime.Now, amount, "Deposit"));
+                double omrAmount = originalAmount / ExchangeRates[currency];
+                Amount[index] += omrAmount;
+
+                HistoryTransactions.Add((UserID[index], DateTime.Now, omrAmount, $"Deposit in {currency} ({originalAmount})"));
 
 
-                //new test 
+
+                //new method  
                 Console.WriteLine("Rate the service (1 to 5):");
                 if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
                 {
@@ -1861,6 +1944,73 @@ namespace MiniBankSystemProject
 
             double avg = UserFeedbackRatings.Average();
             Console.WriteLine($"Average feedback score: {avg:F2} out of 5");
+        }
+
+
+        // PrintFullTransactionHistory function
+        public static void PrintFullTransactionHistory()
+        {
+            Console.WriteLine("Enter UserID to view history:");
+            string userID = Console.ReadLine();
+
+            var userTransactions = HistoryTransactions
+                .Where(t => t.UserID == userID)
+                .OrderBy(t => t.Date);
+
+            double runningBalance = 0;
+
+            foreach (var t in userTransactions)
+            {
+                if (t.Type.Contains("Withdraw")) runningBalance -= t.Amount;
+                else runningBalance += t.Amount;
+
+                Console.WriteLine($"{t.Date:yyyy-MM-dd HH:mm} | {t.Type,-20} | Amount: {t.Amount,-10} | Balance after: {runningBalance}");
+            }
+
+            if (!userTransactions.Any())
+                Console.WriteLine("No transactions found for this user.");
+        }
+
+        public static void BookAppointment()
+        {
+            Console.WriteLine("Enter your UserID:");
+            string userID = Console.ReadLine();
+
+            if (Appointments.Any(a => a.UserID == userID))
+            {
+                Console.WriteLine("You already have an appointment booked.");
+                return;
+            }
+
+            Console.WriteLine("Enter date and time (yyyy-MM-dd HH:mm):");
+            if (!DateTime.TryParse(Console.ReadLine(), out DateTime apptTime))
+            {
+                Console.WriteLine("Invalid date/time.");
+                return;
+            }
+
+            Appointments.Enqueue((userID, apptTime));
+            Console.WriteLine("Appointment booked successfully.");
+        }
+
+
+
+
+        public static void UnlockAccount()
+        {
+            Console.WriteLine("Enter UserID to unlock:");
+            string userID = Console.ReadLine();
+
+            if (LockedAccounts.Contains(userID))
+            {
+                LockedAccounts.Remove(userID);
+                FailedLoginAttempts[userID] = 0;
+                Console.WriteLine("Account unlocked successfully.");
+            }
+            else
+            {
+                Console.WriteLine("This account is not locked.");
+            }
         }
 
 
