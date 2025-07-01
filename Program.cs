@@ -842,6 +842,8 @@ namespace MiniBankSystemProject
             Console.WriteLine("14. View Recent Transactions or by Date");
             Console.WriteLine("15. View Full Transaction History");
             Console.WriteLine("16. Book Appointment");
+            Console.WriteLine("18. Advanced Reports (LINQ)");
+
 
 
 
@@ -905,6 +907,11 @@ namespace MiniBankSystemProject
                 case "16":
                     BookAppointment();
                     break;
+
+                case "18":
+                    ShowLinqStats();
+                    break;
+
 
 
 
@@ -2012,6 +2019,41 @@ namespace MiniBankSystemProject
                 Console.WriteLine("This account is not locked.");
             }
         }
+
+
+        public static void ShowLinqStats()
+        {
+            Console.WriteLine("1. Top 5 Users by Balance");
+            Console.WriteLine("2. Group Transactions by Type (user)");
+
+            string choice = Console.ReadLine();
+            switch (choice)
+            {
+                case "1":
+                    var top = Amount
+                        .Select((amt, i) => new { Name = UserName[i], Balance = amt })
+                        .OrderByDescending(x => x.Balance)
+                        .Take(5);
+                    foreach (var u in top)
+                        Console.WriteLine($"{u.Name}: {u.Balance} OMR");
+                    break;
+
+                case "2":
+                    Console.WriteLine("Enter UserID:");
+                    string uid = Console.ReadLine();
+                    var grouped = HistoryTransactions
+                        .Where(t => t.UserID == uid)
+                        .GroupBy(t => t.Type);
+                    foreach (var g in grouped)
+                    {
+                        Console.WriteLine($"\n--- {g.Key} ---");
+                        foreach (var t in g)
+                            Console.WriteLine($"{t.Date}: {t.Amount} OMR");
+                    }
+                    break;
+            }
+        }
+
 
 
 
