@@ -52,16 +52,6 @@ namespace MiniBankSystemProject
         static Dictionary<string, int> FailedLoginAttempts = new Dictionary<string, int>();
         static HashSet<string> LockedAccounts = new HashSet<string>();
 
-
-
-
-
-
-
-
-
-
-
         static void Main(string[] args)
         {
             // load the accounts from the file
@@ -270,38 +260,32 @@ namespace MiniBankSystemProject
                     Console.WriteLine("1. Yes");
                     Console.WriteLine("2. No");
 
-                    // Read the user's choice
                     string inputChoice = Console.ReadLine();
                     int choice;
 
-                    // Try to parse the input into an integer
                     if (int.TryParse(inputChoice, out choice))
                     {
                         switch (choice)
                         {
                             case 1:
-                                CreateAdminAccount(); // create a new admin account
+                                CreateAdminAccount();
                                 break;
                             case 2:
-                                Console.WriteLine("Thank you for using " + BankName); // exit message
-                                WelcomeScreen();
+                                Console.WriteLine("Thank you for using " + BankName);
                                 break;
                             default:
-                                Console.WriteLine("Invalid choice. Please select 1 or 2."); // invalid option
-                              
+                                Console.WriteLine("Invalid choice. Please select 1 or 2.");
                                 break;
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid input. Please enter a number (1 or 2)."); // input is not a number
+                        Console.WriteLine("Invalid input. Please enter a number (1 or 2).");
                     }
-                    // invalid choise pless  press againe 
-                    Console.WriteLine("Press any key to continue...");
-                    Console.ReadKey(); // wait for user input
-                     
+
                 }
-            }
+
+                }
             catch (Exception ex)
             {
                 // Catch and display any unexpected errors
@@ -1427,10 +1411,15 @@ namespace MiniBankSystemProject
             {
                 using (StreamWriter writer = new StreamWriter(AccountsFilePath))
                 {
-                    for (int i = 0; i < AccounstNumber.Count; i++)
+                    int minCount = new[] {
+                AccounstNumber.Count, UserName.Count, Age.Count,
+                Userspassword.Count, UserNationalID.Count, Amount.Count,
+                StatesOfAccount.Count, UserPhoneNumbers.Count, UserAddresses.Count
+            }.Min();
+
+                    for (int i = 0; i < minCount; i++)
                     {
                         writer.WriteLine($"{AccounstNumber[i]},{UserName[i]},{Age[i]},{Userspassword[i]},{UserNationalID[i]},{Amount[i]},{StatesOfAccount[i]},{UserPhoneNumbers[i]},{UserAddresses[i]}");
-
                     }
                 }
             }
@@ -1439,6 +1428,7 @@ namespace MiniBankSystemProject
                 Console.WriteLine("An error occurred while saving the accounts to the file: " + ex.Message);
             }
         }
+
         // function to load the accounts from a file with the name accounts.txt and try and catch
         public static void LoadAccountsToFile()
         {
