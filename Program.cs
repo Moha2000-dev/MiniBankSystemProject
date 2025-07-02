@@ -19,7 +19,7 @@ namespace MiniBankSystemProject
         const string RequsetBlockAccounts = "RequsetBlockAccounts.txt"; // file path for transactions
         const string RequestCreatAccounts = "RequestCreatAccounts.txt"; // file path for transactions
         const string RequestDeletAccountsFile = "RequestDeletAccounts.txt"; // file path for transactions
-
+        public static string RatingsFilePath = "ratings.txt"; // file path for user feedback ratings
         // global list (parallel)
         static List<string> UserName = new List<string>(); 
         static List<int> Age = new List<int>();
@@ -51,14 +51,21 @@ namespace MiniBankSystemProject
 }; // list to do the ExchangeRates
         static Dictionary<string, int> FailedLoginAttempts = new Dictionary<string, int>();
         static HashSet<string> LockedAccounts = new HashSet<string>();
+        public static List<double> LoanAmount = new List<double>();
+        public static List<double> LoanInterestRate = new List<double>();
+
+
+
+
 
         static void Main(string[] args)
         {
-            LoadAllData();        // Load everything
+
+            LoadAllData();// Load everything
+            EnsureRatingsFileExists();
+            
             WelcomeScreen();      // Let user interact (admin or user)
             SaveAllData();        // Save everything
-
-            PromptBackup();       // Ask user to create a backup
         }
 
         //creat the welcom function
@@ -88,6 +95,7 @@ namespace MiniBankSystemProject
                         break;
                     case "3":
                         Console.WriteLine("Thank you for using " + BankName); // Exit message
+                        PromptBackup();
                         break;
                     default:
                         Console.WriteLine("Invalid choice. Please try again."); // Handle invalid input
@@ -113,16 +121,11 @@ namespace MiniBankSystemProject
         // function to creat Admin Account
         static void CreateAdminAccount()
         {
-
             try
             {
                 // Ask the user to enter National ID
                 Console.WriteLine("Please enter your National ID:");
                 string id = Console.ReadLine();
-
-                // Ask the user to enter a password
-                Console.WriteLine("Please enter your password:");
-                string password = Console.ReadLine();
 
                 // Combine "admin" + ID to create a unique admin ID
                 string adminID = "admin" + id;
@@ -131,38 +134,43 @@ namespace MiniBankSystemProject
                 if (AdminID.Contains(adminID))
                 {
                     Console.WriteLine("ID already exists. Please try again.");
-
-                    // Return to the welcome screen if ID is already taken
                     WelcomeScreen();
                     return;
                 }
-                // v2 Admin Authentication 
-                if (!id.StartsWith("admin"))
+
+                // Check if admin ID has valid format
+                if (!adminID.StartsWith("admin"))
                 {
                     Console.WriteLine("Access denied. Invalid admin ID format.");
                     return;
                 }
 
+                // Ask the user to enter a password
+                Console.WriteLine("Please enter your password:");
+                string password = ReadPassword(); // masks password
+                string hashedPassword = HashPassword(password);
 
-                // Add the new admin ID and password to the lists
+                // Save to login file
+                File.AppendAllText("admin_login.txt", $"{adminID},{hashedPassword}\n");
+
+                // Add to runtime lists
                 AdminID.Add(adminID);
-                AdminPassword.Add(password);
+                AdminPassword.Add(hashedPassword); // store hashed, not plain
 
-                Console.WriteLine("Admin account created successfully.");
+                Console.WriteLine(" Admin account created successfully.");
 
-                // Save the new login information to the file
+                // Save the login info to file
                 SaveLoginToFile();
 
-                // Return to the Admin Menu
+                // Go to admin menu
                 AdminMenu();
             }
             catch (Exception ex)
             {
-                // Handle any unexpected errors
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
-
         }
+
         // mune function for admin ask for the AdminID and password if not creat or try againe the account if yes open the admin menu
         static void Admin()
         {
@@ -306,6 +314,7 @@ namespace MiniBankSystemProject
                                 DeletAccount(); // Function to delete an account
                                 break;
                             case 9:
+                                PromptBackup();
                                 flag = false; // Return to welcome screen
                                 break;
                             case 10:
@@ -814,6 +823,7 @@ namespace MiniBankSystemProject
                 case "10":
                     Console.WriteLine("Thanks for  using " + BankName); // Exit message
                     WelcomeScreen();
+                    
                     break;
                 case "11":
                     Console.WriteLine("Generating Monthly Statement..."); // Generate Monthly Statement
@@ -910,12 +920,18 @@ namespace MiniBankSystemProject
                 AccounstNumber.Add(accountNumber);
                 UserName.Add(name);
                 Age.Add(age);
-                Userspassword.Add(password);
+                Userspassword.Add(hashedPassword); // 
+
                 UserNationalID.Add(nationalID);
                 Amount.Add(amount);
                 StatesOfAccount.Add("Inproces");
                 UserID.Add(name + accountNumber);
+                string finalUserID = name + accountNumber;
+                File.AppendAllText("login.txt", $"{finalUserID},{hashedPassword}\n");
+
                 CreatAccountreadRequest.Enqueue(name + accountNumber);
+                LoanAmount.Add(0);         // Default loan amount is 0
+                LoanInterestRate.Add(0);   // Default interest is 0
                 HasActiveLoan.Add(false); // No loan by default
                 SaveAccountsToFile();
                 Console.WriteLine("Account request created successfully.");
@@ -974,7 +990,7 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Please enter your UserID:");
                 string userID = Console.ReadLine();
 
-                int index =userID.IndexOf(userID);
+                int index = UserID.IndexOf(userID);  // ✅ FIXED
                 if (index == -1)
                 {
                     Console.WriteLine("Invalid Account Number.");
@@ -987,9 +1003,7 @@ namespace MiniBankSystemProject
                     return;
                 }
 
-
-
-                // /new method  
+                // Currency conversion
                 Console.WriteLine("Enter currency (OMR, USD, EUR):");
                 string currency = Console.ReadLine().ToUpper();
 
@@ -1009,11 +1023,11 @@ namespace MiniBankSystemProject
                 double omrAmount = originalAmount / ExchangeRates[currency];
                 Amount[index] += omrAmount;
 
+                // Record the transaction
                 HistoryTransactions.Add((UserID[index], DateTime.Now, omrAmount, $"Deposit in {currency} ({originalAmount})"));
+                Console.WriteLine($"Deposit successful. New balance: {Amount[index]:F2} OMR");
 
-
-
-                //new method  
+                // Feedback
                 Console.WriteLine("Rate the service (1 to 5):");
                 if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
                 {
@@ -1023,13 +1037,11 @@ namespace MiniBankSystemProject
                 {
                     Console.WriteLine("Invalid rating. Skipped.");
                 }
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
-            
         }
 
         // function to withdraw money 
@@ -1040,10 +1052,11 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Please enter your UserID:");
                 string userID = Console.ReadLine();
 
-                int index = AccounstNumber.IndexOf(userID);
+                int index = UserID.IndexOf(userID); 
+
                 if (index == -1)
                 {
-                    Console.WriteLine("Invalid Account Number.");
+                    Console.WriteLine("Invalid User ID.");
                     return;
                 }
 
@@ -1066,12 +1079,12 @@ namespace MiniBankSystemProject
                     return;
                 }
 
-                Amount[index] += amount;
-                Console.WriteLine($"Deposit successful. New balance: {Amount[index]}");
+                Amount[index] -= amount; // : You should subtract, not add
+                Console.WriteLine($"Withdrawal successful. New balance: {Amount[index]}");
+
                 HistoryTransactions.Add((UserID[index], DateTime.Now, amount, "Withdraw"));
 
-
-                // new feutres 
+                // Feedback feature
                 Console.WriteLine("Rate the service (1 to 5):");
                 if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
                 {
@@ -1087,8 +1100,8 @@ namespace MiniBankSystemProject
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
-           
         }
+
         // PROCESS TO Cheak Active Accounet with try and catch ;
         public static void CheakActiveAccounet()
         {
@@ -1366,7 +1379,8 @@ namespace MiniBankSystemProject
 
                     for (int i = 0; i < minCount; i++)
                     {
-                        writer.WriteLine($"{AccounstNumber[i]},{UserName[i]},{Age[i]},{Userspassword[i]},{UserNationalID[i]},{Amount[i]},{StatesOfAccount[i]},{UserPhoneNumbers[i]},{UserAddresses[i]}");
+                        writer.WriteLine($"{AccounstNumber[i]},{UserName[i]},{Age[i]},{Userspassword[i]},{UserNationalID[i]},{Amount[i]},{StatesOfAccount[i]},{UserPhoneNumbers[i]},{UserAddresses[i]},{HasActiveLoan[i]},{LoanAmount[i]},{LoanInterestRate[i]}");
+
                     }
                 }
             }
@@ -1397,6 +1411,10 @@ namespace MiniBankSystemProject
                         StatesOfAccount.Add(parts[6]);
                         UserPhoneNumbers.Add(parts[7]);
                         UserAddresses.Add(parts[8]);
+                        HasActiveLoan.Add(bool.Parse(parts[9]));
+                        LoanAmount.Add(double.Parse(parts[10]));
+                        LoanInterestRate.Add(double.Parse(parts[11]));
+
                     }
 
                 }
@@ -1415,7 +1433,7 @@ namespace MiniBankSystemProject
             {
                 using (StreamWriter writer = new StreamWriter(ReviewsFilePath))
                 {
-                    foreach (string review in Review)
+                    foreach (string review in Review.Reverse()) // To preserve correct order
                     {
                         writer.WriteLine(review);
                     }
@@ -1426,17 +1444,18 @@ namespace MiniBankSystemProject
                 Console.WriteLine("An error occurred while saving the reviews to the file: " + ex.Message);
             }
         }
+
         // function to load the reviews from a file with the name reviews.txt and try and catch
         public static void LoadReviewsToFile()
         {
             try
             {
-                using (StreamReader reader = new StreamReader(ReviewsFilePath))
+                if (File.Exists(ReviewsFilePath))
                 {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
+                    string[] lines = File.ReadAllLines(ReviewsFilePath);
+                    foreach (string line in lines)
                     {
-                        Review.Push(line);
+                        Review.Push(line); // Or use .Add(line) if Review is a List
                     }
                 }
             }
@@ -1445,20 +1464,18 @@ namespace MiniBankSystemProject
                 Console.WriteLine("An error occurred while loading the reviews from the file: " + ex.Message);
             }
         }
+
         // function to save the login information to a file with the name login.txt  for the user and admin
         public static void SaveLoginToFile()
         {
             try
             {
-                using (StreamWriter writer = new StreamWriter(LoginFilePath))
+                int minCount = Math.Min(UserID.Count, Userspassword.Count);
+                using (StreamWriter writer = new StreamWriter("login.txt"))
                 {
-                    for (int i = 0; i < AdminID.Count; i++)
+                    for (int i = 0; i < minCount; i++)
                     {
-                        writer.WriteLine(AdminID[i] + "," + AdminPassword[i]);
-                    }
-                    for (int i = 0; i < UserID.Count; i++)
-                    {
-                        writer.WriteLine(UserID[i] + "," + Userspassword[i]);
+                        writer.WriteLine($"{UserID[i]},{Userspassword[i]}");
                     }
                 }
             }
@@ -1467,6 +1484,7 @@ namespace MiniBankSystemProject
                 Console.WriteLine("An error occurred while saving the login information to the file: " + ex.Message);
             }
         }
+
 
 
         // function to load the login information from a file with the name login.txt  for the user and admin
@@ -1793,8 +1811,8 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Error requesting loan: " + ex.Message);
             }
         }
-        
-        public static void ReviewLoans() // this fuctions ReviewLoans()
+
+        public static void ReviewLoans()
         {
             try
             {
@@ -1820,6 +1838,11 @@ namespace MiniBankSystemProject
                     {
                         Amount[index] += amount;
                         HasActiveLoan[index] = true;
+
+                        // ✅ Add this:
+                        LoanAmount[index] = amount;
+                        LoanInterestRate[index] = rate;
+
                         HistoryTransactions.Add((userID, DateTime.Now, amount, "Loan Approved"));
                         Console.WriteLine("Loan approved and amount added to balance.");
                     }
@@ -1838,9 +1861,10 @@ namespace MiniBankSystemProject
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error rwed       QWR Q WEReviewing loans: " + ex.Message);
+                Console.WriteLine("Error Reviewing loans: " + ex.Message);
             }
         }
+
         // FilteredTransactionView function 
         public static void FilteredTransactionView()
         {
@@ -2005,6 +2029,8 @@ namespace MiniBankSystemProject
             LoadRequestDeletAccountsToFile();
             LoadRequestBlockAccountsToFile();
             LoadReviewsToFile();
+            LoadAdminLoginToFile();
+            LoadRatingsToFile();
         }
 
         static void SaveAllData()
@@ -2015,6 +2041,8 @@ namespace MiniBankSystemProject
             SaveRequestDeletAccountsToFile();
             SaveRequestBlockAccountsToFile();
             SaveReviewsToFile();
+            SaveRatingsToFile();
+
         }
 
         static void PromptBackup()
@@ -2051,6 +2079,7 @@ namespace MiniBankSystemProject
                     }
 
                     Console.WriteLine($" Backup saved to: {fileName}");
+                    Environment.Exit(0);
                 }
                 catch (Exception ex)
                 {
@@ -2060,10 +2089,86 @@ namespace MiniBankSystemProject
             else if (input == "no")
             {
                 Console.WriteLine("No backup created.");
+                Environment.Exit(0);
             }
             else
             {
                 Console.WriteLine("Invalid input. Skipping backup.");
+                Environment.Exit(0);
+            }
+        }
+
+
+        public static void LoadAdminLoginToFile()
+        {
+            try
+            {
+                if (File.Exists("admin_login.txt"))
+                {
+                    string[] lines = File.ReadAllLines("admin_login.txt");
+                    foreach (string line in lines)
+                    {
+                        string[] parts = line.Split(',');
+                        if (parts.Length == 2)
+                        {
+                            AdminID.Add(parts[0]);
+                            AdminPassword.Add(parts[1]);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading admin login data: " + ex.Message);
+            }
+        }
+
+
+
+        public static void EnsureRatingsFileExists()
+        {
+            string path = "ratings.txt";
+            if (!File.Exists(path))
+            {
+                File.Create(path).Close(); // Creates the file and immediately closes it
+                Console.WriteLine("ratings.txt created automatically.");
+            }
+        }
+
+
+
+        public static void LoadRatingsToFile()
+        {
+            try
+            {
+                if (File.Exists(RatingsFilePath))
+                {
+                    string[] lines = File.ReadAllLines(RatingsFilePath);
+                    UserFeedbackRatings = lines.Select(int.Parse).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading feedback ratings: " + ex.Message);
+            }
+        }
+
+        public static void SaveRatingsToFile()
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter("ratings.txt", false)) // overwrite mode
+                {
+                    foreach (int rating in UserFeedbackRatings)
+                    {
+                        writer.WriteLine(rating);
+                    }
+                }
+                Console.WriteLine("Ratings saved to file.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error saving ratings: " + ex.Message);
             }
         }
 
