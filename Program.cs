@@ -63,7 +63,6 @@ namespace MiniBankSystemProject
 
             LoadAllData();// Load everything
             EnsureRatingsFileExists();
-            
             WelcomeScreen();      // Let user interact (admin or user)
             SaveAllData();        // Save everything
         }
@@ -1032,6 +1031,8 @@ namespace MiniBankSystemProject
                 if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
                 {
                     UserFeedbackRatings.Add(rating);
+                    SaveRatingsToFile();
+
                 }
                 else
                 {
@@ -1089,6 +1090,8 @@ namespace MiniBankSystemProject
                 if (int.TryParse(Console.ReadLine(), out int rating) && rating >= 1 && rating <= 5)
                 {
                     UserFeedbackRatings.Add(rating);
+                    SaveRatingsToFile();
+
                 }
                 else
                 {
@@ -2031,6 +2034,7 @@ namespace MiniBankSystemProject
             LoadReviewsToFile();
             LoadAdminLoginToFile();
             LoadRatingsToFile();
+            LoadTransactionsFromFile();
         }
 
         static void SaveAllData()
@@ -2042,6 +2046,8 @@ namespace MiniBankSystemProject
             SaveRequestBlockAccountsToFile();
             SaveReviewsToFile();
             SaveRatingsToFile();
+            SaveTransactionsToFile();
+
 
         }
 
@@ -2171,6 +2177,49 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Error saving ratings: " + ex.Message);
             }
         }
+
+
+        public static void SaveTransactionsToFile()
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter("transactions.txt"))
+                {
+                    foreach (var t in HistoryTransactions)
+                    {
+                        writer.WriteLine($"{t.UserID},{t.Date},{t.Amount},{t.Type}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error saving transactions: " + ex.Message);
+            }
+        }
+
+        public static void LoadRatingsToFile()
+        {
+            try
+            {
+                if (!File.Exists("ratings.txt"))
+                    return;
+
+                UserFeedbackRatings.Clear(); // clear old data to avoid duplication
+
+                foreach (string line in File.ReadLines("ratings.txt"))
+                {
+                    if (int.TryParse(line, out int rating))
+                    {
+                        UserFeedbackRatings.Add(rating);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading ratings: " + ex.Message);
+            }
+        }
+
 
 
 
