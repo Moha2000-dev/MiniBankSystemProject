@@ -65,6 +65,8 @@ namespace MiniBankSystemProject
             EnsureRatingsFileExists();
             WelcomeScreen();      // Let user interact (admin or user)
             SaveAllData();        // Save everything
+
+
         }
 
         //creat the welcom function
@@ -184,6 +186,11 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Please enter your password:");
                 string password = ReadPassword();
                 string hashedPassword = HashPassword(password);
+                if (File.Exists("LockedAccounts.txt"))
+                {
+                    LockedAccounts = new HashSet<string>(File.ReadAllLines("LockedAccounts.txt"));
+                }
+
 
                 if (LockedAccounts.Contains(id))
                 {
@@ -718,6 +725,14 @@ namespace MiniBankSystemProject
                 Console.WriteLine("Your account is locked. Please contact the admin to unlock it.");
                 return;
             }
+         
+
+            if (LockedAccounts.Contains(id))
+            {
+                Console.WriteLine("Your account is locked. Please contact admin.");
+                return;
+            }
+
 
             int index = UserID.IndexOf(id);
             if (index == -1)
@@ -761,6 +776,7 @@ namespace MiniBankSystemProject
 
             // Lock the account after 3 failed tries
             LockedAccounts.Add(id);
+            SaveLockedAccountsToFile(); // Save the lock to file
             FailedLoginAttempts[id] = 3;
             Console.WriteLine("Your account has been locked after 3 failed login attempts.");
         }
@@ -1973,16 +1989,18 @@ namespace MiniBankSystemProject
 
 
 
-        public static void UnlockAccount()
+        static void UnlockAccount()
         {
-            Console.WriteLine("Enter UserID to unlock:");
-            string userID = Console.ReadLine();
+            Console.Write("Enter user ID to unlock: ");
+            string userId = Console.ReadLine();
 
-            if (LockedAccounts.Contains(userID))
+            LoadLockedAccountsFromFile();
+
+            if (LockedAccounts.Contains(userId))
             {
-                LockedAccounts.Remove(userID);
-                FailedLoginAttempts[userID] = 0;
-                Console.WriteLine("Account unlocked successfully.");
+                LockedAccounts.Remove(userId);
+                SaveLockedAccountsToFile(); // update file
+                Console.WriteLine("Account unlocked.");
             }
             else
             {
@@ -2041,6 +2059,7 @@ namespace MiniBankSystemProject
             LoadAdminLoginToFile();
             LoadRatingsToFile();
             LoadTransactionsFromFile();
+            LoadLockedAccountsFromFile(); 
         }
 
         static void SaveAllData()
@@ -2053,6 +2072,7 @@ namespace MiniBankSystemProject
             SaveReviewsToFile();
             SaveRatingsToFile();
             SaveTransactionsToFile();
+            SaveLockedAccountsToFile();
 
 
         }
@@ -2249,6 +2269,19 @@ namespace MiniBankSystemProject
             }
         }
 
+
+        static void LoadLockedAccountsFromFile()
+        {
+            if (File.Exists("LockedAccounts.txt"))
+                LockedAccounts = new HashSet<string>(File.ReadAllLines("LockedAccounts.txt"));
+            else
+                LockedAccounts = new HashSet<string>();
+        }
+
+        static void SaveLockedAccountsToFile()
+        {
+            File.WriteAllLines("LockedAccounts.txt", LockedAccounts);
+        }
 
 
     }
