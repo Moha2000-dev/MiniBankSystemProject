@@ -271,15 +271,16 @@ namespace MiniBankSystemProject
                     Console.WriteLine("10. Review Loan Requests");
                     Console.WriteLine("11. View Average User Feedback");
                     Console.WriteLine("12. View Full Transaction History");
-                    Console.WriteLine("17. Unlock Locked Accounts");
-                  
+                    Console.WriteLine("13. Unlock Locked Accounts");
+                    Console.WriteLine("14. Advanced Reports (LINQ)");
 
 
 
 
 
-                        // Read the user input
-                        string input = Console.ReadLine();
+
+                    // Read the user input
+                    string input = Console.ReadLine();
                     int choice;
 
                     // Try to parse the input into an integer
@@ -325,9 +326,14 @@ namespace MiniBankSystemProject
                             case 12:
                                 PrintFullTransactionHistory();
                                 break;
-                            case 17:
+                            case 13:
                                 UnlockAccount();
                                 break;
+                            case 14:
+                                ShowLinqStats();
+                                break;
+
+                                
 
 
 
@@ -781,7 +787,7 @@ namespace MiniBankSystemProject
             Console.WriteLine("14. View Recent Transactions or by Date");
             Console.WriteLine("15. View Full Transaction History");
             Console.WriteLine("16. Book Appointment");
-            Console.WriteLine("18. Advanced Reports (LINQ)");
+            
 
 
 
@@ -2085,7 +2091,8 @@ namespace MiniBankSystemProject
                     }
 
                     Console.WriteLine($" Backup saved to: {fileName}");
-                    Environment.Exit(0);
+                    ExitAndSave();
+
                 }
                 catch (Exception ex)
                 {
@@ -2095,12 +2102,14 @@ namespace MiniBankSystemProject
             else if (input == "no")
             {
                 Console.WriteLine("No backup created.");
-                Environment.Exit(0);
+                ExitAndSave();
+
             }
             else
             {
                 Console.WriteLine("Invalid input. Skipping backup.");
-                Environment.Exit(0);
+                ExitAndSave();
+
             }
         }
 
@@ -2197,29 +2206,48 @@ namespace MiniBankSystemProject
             }
         }
 
-        public static void LoadRatingsToFile()
+   
+
+
+        public static void LoadTransactionsFromFile()
         {
             try
             {
-                if (!File.Exists("ratings.txt"))
-                    return;
+                if (!File.Exists("transactions.txt")) return;
 
-                UserFeedbackRatings.Clear(); // clear old data to avoid duplication
-
-                foreach (string line in File.ReadLines("ratings.txt"))
+                foreach (string line in File.ReadLines("transactions.txt"))
                 {
-                    if (int.TryParse(line, out int rating))
+                    string[] parts = line.Split(',');
+                    if (parts.Length == 4 &&
+                        DateTime.TryParse(parts[1], out DateTime date) &&
+                        double.TryParse(parts[2], out double amount))
                     {
-                        UserFeedbackRatings.Add(rating);
+                        HistoryTransactions.Add((parts[0], date, amount, parts[3]));
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error loading ratings: " + ex.Message);
+                Console.WriteLine("Error loading transactions: " + ex.Message);
             }
         }
 
+        public static void ExitAndSave()
+        {
+            try
+            {
+                SaveAllData(); // Save everything before exiting
+                Console.WriteLine("All data saved successfully. Exiting now.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error while saving data: " + ex.Message);
+            }
+            finally
+            {
+                Environment.Exit(0); // Safe exit
+            }
+        }
 
 
 
